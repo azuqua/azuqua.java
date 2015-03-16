@@ -133,9 +133,7 @@ public class Azuqua {
 		
 		URL apiUrl = new URL(protocol, host, port, path);
 		
-		// done for boeing proxy
-		Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("wp-blv-proxy.web.boeing.com", 31060));
-		HttpsURLConnection connection = (HttpsURLConnection) apiUrl.openConnection(proxy);
+		HttpsURLConnection connection = (HttpsURLConnection) apiUrl.openConnection();
 		
 		
 		try {			
@@ -159,7 +157,9 @@ public class Azuqua {
 			    wr.flush();
 			    wr.close();
 		    }
-		    
+		    int status = connection.getResponseCode();
+
+		    out("response code " + status);
 		    StringBuffer response = new StringBuffer();
 		    if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
 			    InputStream is = connection.getInputStream();
@@ -172,9 +172,7 @@ public class Azuqua {
 			    rd.close();
 		    }
 		    
-		    int status = connection.getResponseCode();
 		    out("response " + response.toString());
-		    out("response code " + status);
 		    return response.toString();
 		}
 		finally {
