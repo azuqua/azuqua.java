@@ -30,7 +30,7 @@ public class AzuquaMain {
 	    
 	    timestamp="2015-03-16T05:46:47.115Z";
 		
-		azuqua.signDataQ("", "get", "/account/flos", timestamp);
+		azuqua.signData("", "get", "/account/flos", timestamp);
 		List<Azuqua.Flo> flos = (List<Azuqua.Flo>) azuqua.getFlos(false);
 //		out(flos);
 //		for (Azuqua.Flo flo : flos) {

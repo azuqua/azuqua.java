@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
@@ -40,6 +42,7 @@ import com.google.gson.reflect.TypeToken;
 
 
 public class Azuqua {
+	private final static boolean DEBUG = true;
 	private Gson gson = new Gson();
 	private Vector<Flo> floCache = new Vector<Flo>();
 	
@@ -66,35 +69,27 @@ public class Azuqua {
 	}
 	
 	public static void out(Object... objects) {
-		for(Object object : objects) {
-			System.out.println(object);
+		if (DEBUG) {
+			for(Object object : objects) {
+				System.out.println(object);
+			}
 		}
 	}
 	
-	public String signDataQ(String data, String verb, String path, String timestamp) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
+	public String signData(String data, String verb, String path, String timestamp) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
 		Mac hmac = Mac.getInstance("HmacSHA256");
 		SecretKeySpec key = new SecretKeySpec(this.accessSecret.getBytes("UTF-8"), "HmacSHA256");
 		hmac.init(key);
 		
-//		String dataToDigest = "get:/account/flos:2015-03-16T05:06:34.804Z";
 		String dataToDigest = verb + ":" + path + ":" + timestamp;
 		out("data to digest " + dataToDigest);
 		byte[] digest = hmac.doFinal(dataToDigest.getBytes("UTF-8"));
 		String digestString = DatatypeConverter.printHexBinary(digest).toLowerCase();
 		
-		out("digested string " + digestString);
-		
+		out("digested string " + digestString);		
 		return 	digestString;
 	}
-	
-	private String signData(String data) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException{
-		Mac hmac = Mac.getInstance("HmacSHA256");
-		SecretKeySpec key = new SecretKeySpec(Charset.forName("UTF-8").encode(this.accessSecret).array(), "HmacSHA256");
-		hmac.init(key);
-		byte[] digest = hmac.doFinal(data.getBytes());
-		return DatatypeConverter.printHexBinary(digest);	
-	}
-	
+		
 	private class RequestObjectWrapper {
 		private String hash;
 		private String data;
@@ -110,32 +105,35 @@ public class Azuqua {
 		public void setAccessKey(String accessKey){ this.accessKey = accessKey; }
 	}
 	
-	private String makeRequest(String path, String data) throws IOException, InvalidKeyException, NoSuchAlgorithmException, IllegalStateException{
-		RequestObjectWrapper wrapper = new RequestObjectWrapper();
-		wrapper.setAccessKey(this.accessKey);
-		wrapper.setData(data);
-		
+	private String getISOTime() {
 		TimeZone tz = TimeZone.getTimeZone("UTC");
 	    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	    df.setTimeZone(tz);
 	    String timestamp = df.format(new Date());
+	    
+	    return timestamp;
+	}
+	
+	private String makeRequest(String verb, String path, String data) throws IOException, InvalidKeyException, NoSuchAlgorithmException, IllegalStateException{
+		RequestObjectWrapper wrapper = new RequestObjectWrapper();
+		wrapper.setAccessKey(this.accessKey);
+		wrapper.setData(data);
 		
-		String signedData = signDataQ(data, "get", path, timestamp);
+		String timestamp = getISOTime();
+		String signedData = signData(data, verb.toLowerCase(), path, timestamp);
 		
 		wrapper.setHash(signedData);
 		String body = gson.toJson(wrapper);
 		out("body " + body);
 		
-		//		URL apiUrl = new URL(this.host + ":443" +  path);
 		URL apiUrl = new URL("https", "api.azuqua.com", 443, path);
 		
 		HttpsURLConnection connection = (HttpsURLConnection) apiUrl.openConnection();
-		
 		try {			
 			connection.setUseCaches(false);
 		    connection.setDoOutput(true);
 			connection.setDoInput(true);
-			connection.setRequestMethod("GET");
+			connection.setRequestMethod(verb.toUpperCase());
 			connection.setRequestProperty("Accept", "application/json");
 			connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 			connection.setRequestProperty("Content-Length", "" + Integer.toString(body.getBytes().length));
@@ -155,31 +153,35 @@ public class Azuqua {
 			curl += " --verbose https://api.azuqua.com:443/account/flos";
 			out("curl: " + curl);
 			out("headers =====================");
+			out("DEBUG =======================");
 		    out("agent: " + connection.getRequestProperty("agent"));
 		    out("url: " + apiUrl.toString());	
 		    out("METHOD: " + connection.getRequestMethod());
 		    out("host " + apiUrl.getHost());
-		    
-		    DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
-		    wr.writeBytes(body);
-		    wr.flush();
-		    wr.close();
-		    
-//		    int status = connection.getResponseCode();
-//		    out("response code " + status);
-		    
-		    InputStream is = connection.getInputStream();
-		    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-		    String line;
-		    StringBuffer response = new StringBuffer(); 
-		    while((line = rd.readLine()) != null) {
-		    	response.append(line);
-		    	response.append('\r');
-		    }
-		    rd.close();
-		    
+		    out("DEBUG =======================");
 
+		    if (verb.toUpperCase().equals("POST")) {
+			    DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
+			    wr.writeBytes(body);
+			    wr.flush();
+			    wr.close();
+		    }
 		    
+		    StringBuffer response = new StringBuffer();
+		    if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
+			    InputStream is = connection.getInputStream();
+			    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+			    String line;
+			    while((line = rd.readLine()) != null) {
+			    	response.append(line);
+			    	response.append('\r');
+			    }
+			    rd.close();
+		    }
+		    
+		    int status = connection.getResponseCode();
+		    out("response " + response.toString());
+		    out("response code " + status);
 		    return response.toString();
 		}
 		finally {
@@ -209,9 +211,9 @@ public class Azuqua {
 			String path = invokeRoute.replace(":id", this.alias);
 			String out = null;
 			try {
-				out = makeRequest(path, json);
-			} catch (InvalidKeyException | NoSuchAlgorithmException
-					| IllegalStateException | IOException e) {
+				out = makeRequest("POST", path, json);
+//			} catch (InvalidKeyException|NoSuchAlgorithmException|IllegalStateException|IOException e) {
+			} catch (Exception e) {
 				throw new AzuquaException(e);
 			}
 			return out;
@@ -230,14 +232,14 @@ public class Azuqua {
 	
 	public Azuqua(){}
 	
-	public Collection<Flo> getFlos(boolean refresh) throws AzuquaException{
+	public Collection<Flo> getFlos(boolean refresh) throws AzuquaException{		
 		if(refresh || floCache.size() < 1){
 			String path = listRoute;
 			String out = null;
 			try {
-				out = makeRequest(path, "");
-			} catch (InvalidKeyException | NoSuchAlgorithmException
-					| IllegalStateException | IOException e) {
+				out = makeRequest("GET", path, "");
+//			} catch (InvalidKeyException|NoSuchAlgorithmException|IllegalStateException|IOException e) {
+			} catch (Exception e) {
 				throw new AzuquaException(e);
 			}
 			Type collectionType = new TypeToken<Collection<Flo>>(){}.getType();
