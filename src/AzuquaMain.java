@@ -4,6 +4,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+
+
 /**
  * access key: ad99dec1ca1d28a89fbd1dc817f1654f947964b0
  * access secret: 77f0e63c746075f28e20187e7e6745a2161c4658806c2d2609ea346da4cb2162
@@ -31,10 +33,13 @@ public class AzuquaMain {
 	    timestamp="2015-03-16T05:46:47.115Z";
 		
 		azuqua.signData("", "get", "/account/flos", timestamp);
-		List<Azuqua.Flo> flos = (List<Azuqua.Flo>) azuqua.getFlos(false);
-//		out(flos);
-//		for (Azuqua.Flo flo : flos) {
-//			out()
-//		}
+		List<Flo> flos = (List<Flo>) azuqua.getFlos(false);
+		
+		for(Flo flo : flos) {
+			out("alias", flo.getAlias());
+			out("name", flo.getName());
+			String response = flo.invoke("{ \"abc\":\"this is a test.\" }");
+			out(response);
+		}
 	}
 }

@@ -9,15 +9,11 @@ import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
-import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -27,14 +23,7 @@ import java.util.Vector;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.security.cert.X509Certificate;
 import javax.xml.bind.DatatypeConverter;
 
 import com.google.gson.Gson;
@@ -47,27 +36,22 @@ public class Azuqua {
 	private Vector<Flo> floCache = new Vector<Flo>();
 	
 	// routes
-//	private String invokeRoute = "/api/flo/:id/invoke";
-//	private String listRoute = "/api/account/flos";
-	private String invokeRoute = "/flo/:id/invoke";
-	private String listRoute = "/account/flos";	
+	public final static String invokeRoute = "/flo/:id/invoke";
+	public final static String listRoute = "/account/flos";	
 								
 	// http options
-	private String host = "https://api.azuqua.com";	
+	private String host = "api.azuqua.com";
+	private String protocol = "https";
+	private int port = 443;
 							   
-	
 	// account
 	private String accessKey;
 	private String accessSecret;
-	
-	private class AzuquaException extends Exception{
 		
-		public AzuquaException(Throwable cause){ 
-			super(cause); 
-		}
-		
-	}
-	
+	/**
+	 * Wrapper for System.out.println.
+	 * @param objects
+	 */
 	public static void out(Object... objects) {
 		if (DEBUG) {
 			for(Object object : objects) {
@@ -83,10 +67,11 @@ public class Azuqua {
 		
 		String dataToDigest = verb + ":" + path + ":" + timestamp;
 		out("data to digest " + dataToDigest);
+		
 		byte[] digest = hmac.doFinal(dataToDigest.getBytes("UTF-8"));
 		String digestString = DatatypeConverter.printHexBinary(digest).toLowerCase();
-		
 		out("digested string " + digestString);		
+		
 		return 	digestString;
 	}
 		
@@ -114,7 +99,27 @@ public class Azuqua {
 	    return timestamp;
 	}
 	
-	private String makeRequest(String verb, String path, String data) throws IOException, InvalidKeyException, NoSuchAlgorithmException, IllegalStateException{
+	private void printHeaders(HttpsURLConnection connection, URL apiUrl) {
+	    out("headers =====================");
+	    String curl = "curl -i ";
+		for (Entry<String, List<String>> k : connection.getRequestProperties().entrySet()) {
+		    for (String v : k.getValue()){
+		         System.out.println(k.getKey() + ":" + v);
+		         curl += "-H \"" + k.getKey() + ":" + v + "\" ";
+		    }
+		}
+		curl += " --verbose https://api.azuqua.com:443/account/flos";
+		out("curl: " + curl);
+		out("headers =====================");
+		out("DEBUG =======================");
+	    out("agent: " + connection.getRequestProperty("agent"));
+	    out("url: " + apiUrl.toString());	
+	    out("METHOD: " + connection.getRequestMethod());
+	    out("host " + apiUrl.getHost());
+	    out("DEBUG =======================");
+	}
+	
+	public String makeRequest(String verb, String path, String data) throws IOException, InvalidKeyException, NoSuchAlgorithmException, IllegalStateException{
 		RequestObjectWrapper wrapper = new RequestObjectWrapper();
 		wrapper.setAccessKey(this.accessKey);
 		wrapper.setData(data);
@@ -126,9 +131,13 @@ public class Azuqua {
 		String body = gson.toJson(wrapper);
 		out("body " + body);
 		
-		URL apiUrl = new URL("https", "api.azuqua.com", 443, path);
+		URL apiUrl = new URL(protocol, host, port, path);
 		
-		HttpsURLConnection connection = (HttpsURLConnection) apiUrl.openConnection();
+		// done for boeing proxy
+		Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("wp-blv-proxy.web.boeing.com", 31060));
+		HttpsURLConnection connection = (HttpsURLConnection) apiUrl.openConnection(proxy);
+		
+		
 		try {			
 			connection.setUseCaches(false);
 		    connection.setDoOutput(true);
@@ -141,25 +150,9 @@ public class Azuqua {
 			connection.setRequestProperty("x-api-hash", signedData);
 			connection.setRequestProperty("x-api-accessKey", this.accessKey);
 			connection.setRequestProperty("host", "api.azuqua.com");
+			
+			printHeaders(connection, apiUrl);
 					    
-		    out("headers =====================");
-		    String curl = "curl -i ";
-			for (Entry<String, List<String>> k : connection.getRequestProperties().entrySet()) {
-			    for (String v : k.getValue()){
-			         System.out.println(k.getKey() + ":" + v);
-			         curl += "-H \"" + k.getKey() + ":" + v + "\" ";
-			    }
-			}
-			curl += " --verbose https://api.azuqua.com:443/account/flos";
-			out("curl: " + curl);
-			out("headers =====================");
-			out("DEBUG =======================");
-		    out("agent: " + connection.getRequestProperty("agent"));
-		    out("url: " + apiUrl.toString());	
-		    out("METHOD: " + connection.getRequestMethod());
-		    out("host " + apiUrl.getHost());
-		    out("DEBUG =======================");
-
 		    if (verb.toUpperCase().equals("POST")) {
 			    DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
 			    wr.writeBytes(body);
@@ -189,37 +182,7 @@ public class Azuqua {
 		}
 	}
 	
-	// Azuqua azuqua = new Azuqua(key, secret);
-	// Azuqua.Flo flo = azuqua.new Flo();
-	public class Flo {
-		private String name;
-		private String alias;
-			
-		public Flo(String name, String alias){
-			this.name = name;
-			this.alias = alias;			
-		}
-		
-		public Flo(){}
-		
-		public String getName(){ return name; }
-		public String getAlias(){ return alias; }
-		public void setName(String name){ this.name = name; }
-		public void setAlias(String alias){ this.alias = alias; }
-		
-		public String invoke(String json) throws AzuquaException{
-			String path = invokeRoute.replace(":id", this.alias);
-			String out = null;
-			try {
-				out = makeRequest("POST", path, json);
-//			} catch (InvalidKeyException|NoSuchAlgorithmException|IllegalStateException|IOException e) {
-			} catch (Exception e) {
-				throw new AzuquaException(e);
-			}
-			return out;
-		}
-		
-	}
+
 	
 	public void loadConfig(String accessKey, String accessSecret){
 		this.accessKey = accessKey;
@@ -242,8 +205,15 @@ public class Azuqua {
 			} catch (Exception e) {
 				throw new AzuquaException(e);
 			}
-			Type collectionType = new TypeToken<Collection<Flo>>(){}.getType();
-			return gson.fromJson(out, collectionType);
+			Type collectionType = new TypeToken< Collection<Flo> >(){}.getType();
+			Collection<Flo> collection = gson.fromJson(out, collectionType);
+			
+			// give each Flo a reference to this so it can make a request
+			for (Flo flo : collection) {
+				flo.setAzuqua(this);
+			}
+			
+			return collection;
 		}else{	
 			return this.floCache;
 		}		
