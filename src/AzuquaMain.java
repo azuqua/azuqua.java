@@ -38,7 +38,7 @@ public class AzuquaMain {
 		for(Flo flo : flos) {
 			out("alias", flo.getAlias());
 			out("name", flo.getName());
-			String response = flo.invoke("{ \"abc\":\"this is a test.\" }");
+			String response = flo.invoke("{\"abc\":\"this is a test.\"}");
 			out(response);
 		}
 	}
