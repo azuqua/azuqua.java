@@ -24,15 +24,6 @@ public class AzuquaMain {
 	
 	public static void main(String[] argv) throws Exception {
 		Azuqua azuqua = new Azuqua(access_key, access_secret);
-		
-		TimeZone tz = TimeZone.getTimeZone("UTC");
-	    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-	    df.setTimeZone(tz);
-	    String timestamp = df.format(new Date());
-	    
-	    timestamp="2015-03-16T05:46:47.115Z";
-		
-		azuqua.signData("", "get", "/account/flos", timestamp);
 		List<Flo> flos = (List<Flo>) azuqua.getFlos(false);
 		
 		for(Flo flo : flos) {
