@@ -28,7 +28,7 @@ import com.google.gson.reflect.TypeToken;
 
 
 public class Azuqua {
-	private final static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private Gson gson = new Gson();
 	private Vector<Flo> floCache = new Vector<Flo>();
 	
@@ -187,6 +187,30 @@ public class Azuqua {
 	
 	public Collection<Flo> getFlos(boolean refresh) throws AzuquaException{		
 		if(refresh || floCache.size() < 1){
+			String path = listRoute;
+			String out = null;
+			try {
+				out = makeRequest("GET", path, "");
+			} catch (InvalidKeyException | NoSuchAlgorithmException | 
+					IllegalStateException | IOException e) {
+				throw new AzuquaException(e);
+			}
+			Type collectionType = new TypeToken< Collection<Flo> >(){}.getType();
+			Collection<Flo> collection = gson.fromJson(out, collectionType);
+			
+			// give each Flo a reference to this so it can make a request call
+			for (Flo flo : collection) {
+				flo.setAzuqua(this);
+			}
+			
+			return collection;
+		}else{	
+			return this.floCache;
+		}		
+	}
+	
+	public Collection<Flo> getFlos() throws AzuquaException{		
+		if(floCache.size() < 1){
 			String path = listRoute;
 			String out = null;
 			try {

@@ -12,7 +12,7 @@ import java.util.TimeZone;
  * @author quyvle
  *
  */
-public class AzuquaMain {
+public class AzuquaExample {
 	private static String access_key = "ad99dec1ca1d28a89fbd1dc817f1654f947964b0";
 	private static String access_secret = "77f0e63c746075f28e20187e7e6745a2161c4658806c2d2609ea346da4cb2162";
 	
@@ -24,11 +24,14 @@ public class AzuquaMain {
 	
 	public static void main(String[] argv) throws Exception {
 		Azuqua azuqua = new Azuqua(access_key, access_secret);
-		List<Flo> flos = (List<Flo>) azuqua.getFlos(false);
+		List<Flo> flos = (List<Flo>) azuqua.getFlos();
+		
+		// you can also manually refresh the flo cache
+		// flos = (List<Flo>) azuqua.getFlos(true);
 		
 		for(Flo flo : flos) {
-			out("alias", flo.getAlias());
-			out("name", flo.getName());
+			System.out.println("Alias: " + flo.getAlias());
+			System.out.println("Name: " + flo.getName());
 			String response = flo.invoke("{\"abc\":\"this is a test.\"}");
 			out(response);
 		}
