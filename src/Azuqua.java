@@ -6,7 +6,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
@@ -97,7 +99,7 @@ public class Azuqua {
 	    return timestamp;
 	}
 	
-	private void printHeaders(String verb, HttpsURLConnection connection, URL apiUrl) {
+	private void printHeaders(String verb, URLConnection connection, URL apiUrl) {
 	    out("headers =====================");
 	    String curl = "curl -i ";
 	    
@@ -118,29 +120,34 @@ public class Azuqua {
 		out("DEBUG =======================");
 	    out("agent: " + connection.getRequestProperty("agent"));
 	    out("url: " + apiUrl.toString());	
-	    out("METHOD: " + connection.getRequestMethod());
+	    out("METHOD: " + ((HttpURLConnection) connection).getRequestMethod());
 	    out("host " + apiUrl.getHost());
 	    out("DEBUG =======================");
 	}
 	
-	public String makeRequest(String verb, String path, String data) throws IOException, InvalidKeyException, NoSuchAlgorithmException, IllegalStateException{		
+	protected String makeRequest(String verb, String path, String data) throws IOException, InvalidKeyException, NoSuchAlgorithmException, IllegalStateException{		
+		URLConnection connection;
 		String timestamp = getISOTime();
 		String signedData = signData(data, verb.toLowerCase(), path, timestamp);
 		
-		URL apiUrl = new URL(protocol, host, port, path);
-		HttpsURLConnection connection = (HttpsURLConnection) apiUrl.openConnection();
+		URL apiUrl = new URL(this.protocol, this.host, this.port, path);
+		if(this.protocol.equals("https")){
+			connection = (HttpsURLConnection) apiUrl.openConnection();
+		}else{
+			connection = (HttpURLConnection) apiUrl.openConnection();
+		}
 		
 		try {			
 			connection.setUseCaches(false);
 		    connection.setDoOutput(true);
 			connection.setDoInput(true);
-			connection.setRequestMethod(verb.toUpperCase());
+			((HttpURLConnection) connection).setRequestMethod(verb.toUpperCase());
 			connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 			connection.setRequestProperty("Content-Length", "" + Integer.toString(data.getBytes().length));
 			connection.setRequestProperty("x-api-timestamp", timestamp);
 			connection.setRequestProperty("x-api-hash", signedData);
 			connection.setRequestProperty("x-api-accessKey", this.accessKey);
-			connection.setRequestProperty("host", "api.azuqua.com");
+			connection.setRequestProperty("host", this.host);
 			
 			printHeaders(verb, connection, apiUrl);
 					    
@@ -151,7 +158,7 @@ public class Azuqua {
 			    wr.close();
 		    }
 		    
-		    int status = connection.getResponseCode();
+		    int status = ((HttpURLConnection) connection).getResponseCode();
 		    out("response code " + status);
 		    StringBuffer response = new StringBuffer();
 		    if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
@@ -168,19 +175,32 @@ public class Azuqua {
 		    return response.toString();
 		}
 		finally {
-			connection.disconnect();
+			((HttpURLConnection) connection).disconnect();
 		}
 	}
 	
-
-	
-	public void loadConfig(String accessKey, String accessSecret){
+	public void loadConfig(String accessKey, String accessSecret, String host, int port, String protocol){
 		this.accessKey = accessKey;
 		this.accessSecret = accessSecret;
+		this.host = host;
+		this.port = port;
+		this.protocol = protocol;
 	}
 	
 	public Azuqua(String accessKey, String accessSecret){
-		loadConfig(accessKey, accessSecret);
+		loadConfig(accessKey, accessSecret, host, port, protocol);
+	}
+	
+	public Azuqua(String accessKey, String accessSecret, String _host){
+		loadConfig(accessKey, accessSecret, _host, port, protocol);
+	}
+	
+	public Azuqua(String accessKey, String accessSecret, String _host, int _port){
+		loadConfig(accessKey, accessSecret, _host, _port, protocol);
+	}
+	
+	public Azuqua(String accessKey, String accessSecret, String _host, int _port, String _protocol){
+		loadConfig(accessKey, accessSecret, _host, _port, _protocol);
 	}
 	
 	public Azuqua(){}
