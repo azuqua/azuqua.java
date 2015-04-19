@@ -1,5 +1,12 @@
-// Azuqua azuqua = new Azuqua(key, secret);
-// Azuqua.Flo flo = azuqua.new Flo();
+package com.azuqua.java.client.model;
+import com.azuqua.java.client.Azuqua;
+import com.azuqua.java.client.AzuquaException;
+
+/**
+ * 
+ * @author quyle
+ *
+ */
 public class Flo {
 	private static boolean DEBUG = true;
 	private String name;
@@ -24,22 +31,20 @@ public class Flo {
 	 * Wrapper for System.out.println.
 	 * @param objects
 	 */
-	public static void out(Object... objects) {
+	public static void o(String method, String msg) {
 		if (DEBUG) {
-			for(Object object : objects) {
-				System.out.println(object);
-			}
+			System.out.println(Flo.class.getName() + "." + method + ": " + msg);
 		}
 	}
 	
 	public String invoke(String json) throws AzuquaException{
+		String method = "invoke";
 		String path = Azuqua.invokeRoute.replace(":id", this.alias);
-		out("path " + path);
-		out("json " + json);
+		o(method, "path " + path);
+		o(method, "json " + json);
 		String out = null;
 		try {
 			out = azuqua.makeRequest("POST", path, json);
-//			} catch (InvalidKeyException|NoSuchAlgorithmException|IllegalStateException|IOException e) {
 		} catch (Exception e) {
 			throw new AzuquaException(e);
 		}
