@@ -73,7 +73,7 @@ for(Org org : orgs.getOrgs()) {
  *
  */
 public class Azuqua {
-	private boolean DEBUG = false;
+	private boolean DEBUG = true;
 	private Gson gson = new Gson();
 	private Vector<Flo> floCache = new Vector<Flo>();
 	
@@ -202,7 +202,7 @@ public class Azuqua {
 			
 			connection.setRequestProperty("host", this.host);
 			
-			// printHeaders(verb, connection, apiUrl);
+//			printHeaders(verb, connection, apiUrl);
 					    
 		    if (verb.toUpperCase().equals("POST")) {
 			    DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
