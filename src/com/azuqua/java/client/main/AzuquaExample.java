@@ -14,8 +14,8 @@ import com.azuqua.java.client.model.Org;
  *
  */
 public class AzuquaExample {
-	private static String access_key = "ACCESS_KEY";
-	private static String access_secret = "ACCESS_SECRET";
+	private static String access_key = "access key";
+	private static String access_secret = "access secret";
 	
 	/**
 	 * In this example, we're making a calling to the 
