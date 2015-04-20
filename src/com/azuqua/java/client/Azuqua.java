@@ -92,6 +92,25 @@ public class Azuqua {
 	private String accessKey;
 	private String accessSecret;
 	
+    final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    /**
+     * Custom implementation of DatatypeConverter.printHexBinary() method. Not as 
+     * fast, but works just fine for this purpose. This method is needed because 
+     * Android doesn't have the DatatypeConverter object. In the futute, we should
+     * use a cross platform implementation such as the Apache codec jar.
+     * @param bytes
+     * @return
+     */
+    private String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+	
 	private String signData(String data, String verb, String path, String timestamp) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
 		String method = "signData";
 		
@@ -104,7 +123,7 @@ public class Azuqua {
 		out(method, "data to digest " + dataToDigest);
 		
 		byte[] digest = hmac.doFinal(dataToDigest.getBytes("UTF-8"));
-		String digestString = DatatypeConverter.printHexBinary(digest).toLowerCase();
+		String digestString = bytesToHex(digest).toLowerCase();
 		out(method, "digested string " + digestString);		
 		
 		return 	digestString;
