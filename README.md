@@ -48,7 +48,7 @@ for(Org org : orgs.getOrgs()) {
 		// the flo can make Azuqua API calls
 		flo.setAzuqua(azuqua);
 		
-		String resp = flo.invoke("{\"abc\":\"foo@azuqua.com\"}");
+		String resp = flo.invoke("{\"abc\":\"foo@azuqua.com\"}", true);
 		System.out.println("resp login method: " + resp);
 	}
 }
