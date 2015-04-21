@@ -27,7 +27,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
+import com.google.gson.stream.JsonReader;
 import com.azuqua.java.client.model.*;
 
 /**
@@ -235,6 +235,73 @@ public class Azuqua {
 	}
 	
 	/**
+	 * Makes a request call to the Azuqua API.
+	 * @param verb A String that is either GET or POST.
+	 * @param Path REST API route.
+	 * @param data Data to send to the Azuqua web service.
+	 * @return
+	 * @throws Exception
+	 */
+	public URLConnection makeRequestForInputStream(String verb, String path, String data) throws Exception {
+		String method = "makeRequest";
+		
+		URLConnection connection;
+		String timestamp = getISOTime();
+		
+		String signedData = null;
+		if (accessKey != null && accessSecret != null) {
+			signedData = signData(data, verb.toLowerCase(), path, timestamp);
+		}
+		
+		URL apiUrl = new URL(this.protocol, this.host, this.port, path);
+		connection = this.protocol.equals("https") ? (HttpsURLConnection) apiUrl.openConnection() : (HttpURLConnection) apiUrl.openConnection();
+		
+		try {			
+			connection.setUseCaches(false);
+		    connection.setDoOutput(true);
+			connection.setDoInput(true);
+			((HttpURLConnection) connection).setRequestMethod(verb.toUpperCase());
+			connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+			connection.setRequestProperty("Content-Length", "" + Integer.toString(data.getBytes().length));
+			connection.setRequestProperty("x-api-timestamp", timestamp);
+			
+			if (signedData != null) {
+				connection.setRequestProperty("x-api-hash", signedData);
+				connection.setRequestProperty("x-api-accessKey", this.accessKey);
+			}
+			
+			connection.setRequestProperty("host", this.host);
+			
+//			printHeaders(verb, connection, apiUrl);
+					    
+		    if (verb.toUpperCase().equals("POST")) {
+			    DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
+			    wr.writeBytes(data);
+			    wr.flush();
+			    wr.close();
+		    }
+		    
+//		    int status = ((HttpURLConnection) connection).getResponseCode();
+//		    out(method, "response code " + status);
+//		    StringBuffer response = new StringBuffer();
+//		    if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
+//			    InputStream is = connection.getInputStream();
+//			    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+//			    String line;
+//			    while((line = rd.readLine()) != null) {
+//			    	response.append(line);
+//			    	response.append('\r');
+//			    }
+//			    rd.close();
+//		    	return connection.getInputStream();
+//		    }
+		    return connection;
+		} catch(Exception e) {
+			throw e;
+		}
+	}
+	
+	/**
 	 * Load config info for this class.
 	 * @param accessKey
 	 * @param accessSecret
@@ -330,19 +397,51 @@ public class Azuqua {
 		}
 	}
 	
-	public Orgs login(String username, String password) throws Exception {
+	/**
+	 * Log on with your username and password. This method returns an 
+	 * Orgs object which contains a list of Org objects. Each Org object
+	 * will contain a list of Flo objects. Check out the specific classes 
+	 * for more information regarding available methods. 
+	 * 
+	 * Set streamOrgsJson to true if the device you are using has memory 
+	 * constraints. Once the Azuqua web service has verified your username 
+	 * and password, the web service returns an orgs JSON, which can be large.
+	 * This Orgs JSON string will then be deserialized into an Orgs object.
+	 * If streamOrgsJson is set to true, the Orgs JSON stream will be streamed 
+	 * into the deserialization method.
+	 * @param username
+	 * @param password
+	 * @param streamOrgsJson specifies whether the user wants the orgs 
+	 * @return
+	 * @throws Exception
+	 */
+	public Orgs login(String username, String password, boolean streamOrgsJson) throws Exception {
 		String method = "login";
 		String loginInfo = gson.toJson(new LoginInfo(username, password));
 		out(method, "username: " + username);
 		
-		String accountInfo = makeRequest("POST", accountsInfoRoute, loginInfo);
-		out(method, "accountInfo: " + accountInfo);
-		
-		Orgs orgs = gson.fromJson(accountInfo, Orgs.class);
-		
-		return orgs;
+		if (streamOrgsJson) {
+			URLConnection connection = null;
+			try {
+				connection = makeRequestForInputStream("POST", accountsInfoRoute, loginInfo);
+				InputStream is = connection.getInputStream();
+				InputStreamReader isr = new InputStreamReader(is);
+				JsonReader jsonReader = new JsonReader(isr);
+				Orgs orgs = gson.fromJson(jsonReader, Orgs.class);
+				return orgs;
+			}
+			finally {
+				((HttpURLConnection) connection).disconnect();
+			}
+		} 
+		else {
+			String accountInfo = makeRequest("POST", accountsInfoRoute, loginInfo);
+			out(method, "accountInfo: " + accountInfo);
+			Orgs orgs = gson.fromJson(accountInfo, Orgs.class);
+			return orgs;
+		}
 	}
-	
+
 	/**
 	 * Wrapper for System.out.println.
 	 * @param objects
