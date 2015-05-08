@@ -32,21 +32,12 @@ The second is by specifying your logon credentials for your Azuqua account:
 ```
 // invoke flos through your login credentials
 Azuqua azuqua = new Azuqua();
-Orgs orgs = azuqua.login("user@azuqua.com", "password");
+Collection<Org> orgs = azuqua.login("user@azuqua.com", "password");
 	
-for(Org org : orgs.getOrgs()) {
-	// set the access key and access secret from the 
-	// specific org you're trying to invoke flos from
-	azuqua.setAccessKey(org.getAccessKey());
-	azuqua.setAccessSecret(org.getAccessSecret());
-	
+for(Org org : orgs) {	
 	for(Flo flo : org.getFlos()) {
 		System.out.println("Alias: " + flo.getAlias());
 		System.out.println("Name: " + flo.getName());
-		
-		// give a reference to the Azuqua object so that 
-		// the flo can make Azuqua API calls
-		flo.setAzuqua(azuqua);
 		
 		String resp = flo.invoke("{\"abc\":\"foo@azuqua.com\"}", true);
 		System.out.println("resp login method: " + resp);

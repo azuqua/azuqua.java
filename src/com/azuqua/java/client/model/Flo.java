@@ -51,4 +51,43 @@ public class Flo {
 		return out;
 	}
 	
+	public String read() throws AzuquaException{
+		String method = "read";
+		String path = Azuqua.readRoute.replace(":id", this.alias);
+		o(method, "path " + path);
+		String out = null;
+		try {
+			out = azuqua.makeRequest("GET", path, "");
+		} catch (Exception e) {
+			throw new AzuquaException(e);
+		}
+		return out;
+	}
+	
+	public String enable() throws AzuquaException{
+		String method = "read";
+		String path = Azuqua.enableRoute.replace(":id", this.alias);
+		o(method, "path " + path);
+		String out = null;
+		try {
+			out = azuqua.makeRequest("GET", path, "");
+		} catch (Exception e) {
+			throw new AzuquaException(e);
+		}
+		return out;
+	}
+	
+	public String disable() throws AzuquaException{
+		String method = "read";
+		String path = Azuqua.disableRoute.replace(":id", this.alias);
+		o(method, "path " + path);
+		String out = null;
+		try {
+			out = azuqua.makeRequest("GET", path, "");
+		} catch (Exception e) {
+			throw new AzuquaException(e);
+		}
+		return out;
+	}
+	
 }

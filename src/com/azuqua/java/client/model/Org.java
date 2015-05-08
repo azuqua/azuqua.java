@@ -1,19 +1,22 @@
 package com.azuqua.java.client.model;
 import java.util.ArrayList;
+import java.util.Collection;
+
+import com.azuqua.java.client.Azuqua;
+import com.azuqua.java.client.AzuquaException;
 
 public class Org {
     private String name;
     private String accessKey;
     private String accessSecret;
-    private ArrayList<Flo> flos;
-
-    public Org(String name, String accessKey, String accessSecret, ArrayList<Flo> flos){
+    private Azuqua azuqua;
+    
+	public Org(String name, String accessKey, String accessSecret, ArrayList<Flo> flos){
         this.name = name;
         this.accessKey = accessKey;
         this.accessSecret = accessSecret;
-        this.flos = flos;
     }
-
+    
 
     public void setName(String name) {
         this.name = name;
@@ -31,11 +34,7 @@ public class Org {
     public void setAccessSecret(String accessSecret) {
         this.accessSecret = accessSecret;
     }
-
-    public void setFlos(ArrayList<Flo> flos) {
-        this.flos = flos;
-    }
-
+    
     //Get AccessKey
     public String getAccessKey(){
         return this.accessKey;
@@ -45,14 +44,13 @@ public class Org {
     public String getAccessSecret(){
         return this.accessSecret;
     }
-
-    //Get Flos
-    public ArrayList<Flo> getFlos(){
-        return this.flos;
+    
+    public Collection<Flo> getFlos() throws AzuquaException {
+    	return azuqua.getFlos();
     }
 
-    //Add Flo
-    public void addFlo(Flo flo){
-        this.flos.add(flo);
-    }
+	public void setAzuqua(Azuqua azuqua) {
+		this.azuqua = azuqua;
+	}
+
 }

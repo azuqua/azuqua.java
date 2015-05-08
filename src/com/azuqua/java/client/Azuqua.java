@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.Vector;
@@ -32,55 +33,21 @@ import com.azuqua.java.client.model.*;
 
 /**
  * <p>Enables the caller to make requests to the Azuqua API.</p>
- * 
- * <p>There's two ways to use this object:</p> 
- * 
- * <ul>
- * <li>Pass your access key and access secret into the constructor.
- * <pre>
-Azuqua azuqua = new Azuqua(ACCESS_KEY, ACCESS_SECRET);
-List<Flo> flos = azuqua.getFlos();
-for(Flo flo : flos) {
-	flo.invoke(data);
-}
- * </pre>
- * </li>
- * <li>
- * Use your logon credentials:
- * <pre>
-Azuqua azuqua = new Azuqua();
-Orgs orgs = azuqua.login("user@azuqua.com", "password");
-for(Org org : orgs.getOrgs()) {
-	// set the access key and access secret from the 
-	// specific org you're trying to invoke flos from.
-	azuqua.setAccessKey(org.getAccessKey());
-	azuqua.setAccessSecret(org.getAccessSecret());
-	
-	for(Flo flo : org.getFlos()) {
-		o(method, "Alias: " + flo.getAlias());
-		o(method, "Name: " + flo.getName());
-		
-		// Need to give a reference to the azuqua object so the 
-		// the flo can make Http calls.
-		flo.setAzuqua(azuqua);
-		String resp = flo.invoke("{\"abc\":\"fooazuqua.com\"}");
-		o(method, "resp login method: " + resp);
-	}
-}
- * </pre>
- * </li>
  * @author quyle
  *
  */
 public class Azuqua {
-	private boolean DEBUG = true;
+	private boolean DEBUG = false;
 	private Gson gson = new Gson();
 	private Vector<Flo> floCache = new Vector<Flo>();
 	
 	// routes
 	public final static String invokeRoute = "/flo/:id/invoke";
-	public final static String listRoute = "/account/flos";	
-	public final static String accountsInfoRoute = "/account/data";
+	public final static String readRoute = "/flo/:id/read";
+	public final static String disableRoute = "/flo/:id/disable";
+	public final static String enableRoute = "/flo/:id/enable";
+	public final static String listRoute = "/org/flos";	
+	public final static String accountsInfoRoute = "/org/login";
 								
 	// http options
 	private String host = "api.azuqua.com";
@@ -214,17 +181,27 @@ public class Azuqua {
 		    int status = ((HttpURLConnection) connection).getResponseCode();
 		    out(method, "response code " + status);
 		    StringBuffer response = new StringBuffer();
-		    if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
-			    InputStream is = connection.getInputStream();
-			    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-			    String line;
-			    while((line = rd.readLine()) != null) {
-			    	response.append(line);
-			    	response.append('\r');
-			    }
-			    rd.close();
+		    InputStream is = null;
+		    if (status < 400) {
+			    is = connection.getInputStream();
 		    }
+		    else {
+		    	// probably doesn't matter, but good to check which connection to get the error stream anyway
+		    	is = this.protocol.equals("https") ? ((HttpsURLConnection) connection).getErrorStream() : ((HttpURLConnection) connection).getErrorStream();
+		    }
+		    
+		    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+		    String line;
+		    while((line = rd.readLine()) != null) {
+		    	response.append(line);
+		    	response.append('\r');
+		    }
+		    rd.close();
+		    
 		    out(method, "response " + response.toString());
+		    if (status >= 400) {
+		    	throw new AzuquaException(new Throwable(response.toString()));
+		    }
 		    return response.toString();
 		} catch(Exception e) {
 			throw e;
@@ -270,31 +247,13 @@ public class Azuqua {
 				connection.setRequestProperty("x-api-accessKey", this.accessKey);
 			}
 			
-			connection.setRequestProperty("host", this.host);
-			
-//			printHeaders(verb, connection, apiUrl);
-					    
+			connection.setRequestProperty("host", this.host);					    
 		    if (verb.toUpperCase().equals("POST")) {
 			    DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
 			    wr.writeBytes(data);
 			    wr.flush();
 			    wr.close();
 		    }
-		    
-//		    int status = ((HttpURLConnection) connection).getResponseCode();
-//		    out(method, "response code " + status);
-//		    StringBuffer response = new StringBuffer();
-//		    if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
-//			    InputStream is = connection.getInputStream();
-//			    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-//			    String line;
-//			    while((line = rd.readLine()) != null) {
-//			    	response.append(line);
-//			    	response.append('\r');
-//			    }
-//			    rd.close();
-//		    	return connection.getInputStream();
-//		    }
 		    return connection;
 		} catch(Exception e) {
 			throw e;
@@ -310,8 +269,17 @@ public class Azuqua {
 	 * @param protocol
 	 */
 	public void loadConfig(String accessKey, String accessSecret, String host, int port, String protocol){
-		this.accessKey = accessKey;
-		this.accessSecret = accessSecret;
+		if (accessKey != null && accessSecret != null) {
+			this.accessKey = accessKey;
+			this.accessSecret = accessSecret;
+		}
+		else {
+			// if calling the default constructor, the constructor 
+			Map<String, String> env = System.getenv();
+			this.accessKey = env.get("ACCESS_KEY");
+			this.accessSecret = env.get("ACCESS_SECRET");		
+		}
+		
 		this.host = host;
 		this.port = port;
 		this.protocol = protocol;
@@ -333,7 +301,9 @@ public class Azuqua {
 		loadConfig(accessKey, accessSecret, _host, _port, _protocol);
 	}
 	
-	public Azuqua(){}
+	public Azuqua(){
+		loadConfig(accessKey, accessSecret, host, port, protocol);
+	} 
 	
 	/**
 	 * Returns a collection of flos. 
@@ -382,7 +352,7 @@ public class Azuqua {
 				}
 				Type collectionType = new TypeToken< Collection<Flo> >(){}.getType();
 				Collection<Flo> collection = gson.fromJson(out, collectionType);
-				
+					
 				// give each Flo a reference to this so it can make a request call
 				for (Flo flo : collection) {
 					flo.setAzuqua(this);
@@ -415,10 +385,13 @@ public class Azuqua {
 	 * @return
 	 * @throws Exception
 	 */
-	public Orgs login(String username, String password, boolean streamOrgsJson) throws Exception {
+	public Collection<Org> login(String username, String password, boolean streamOrgsJson) throws Exception {
 		String method = "login";
 		String loginInfo = gson.toJson(new LoginInfo(username, password));
 		out(method, "username: " + username);
+		
+		Type collectionType = new TypeToken<Collection<Org>>(){}.getType();
+		Collection<Org> orgs = null;
 		
 		if (streamOrgsJson) {
 			URLConnection connection = null;
@@ -427,8 +400,7 @@ public class Azuqua {
 				InputStream is = connection.getInputStream();
 				InputStreamReader isr = new InputStreamReader(is);
 				JsonReader jsonReader = new JsonReader(isr);
-				Orgs orgs = gson.fromJson(jsonReader, Orgs.class);
-				return orgs;
+				orgs = gson.fromJson(jsonReader, collectionType);
 			}
 			finally {
 				((HttpURLConnection) connection).disconnect();
@@ -437,9 +409,14 @@ public class Azuqua {
 		else {
 			String accountInfo = makeRequest("POST", accountsInfoRoute, loginInfo);
 			out(method, "accountInfo: " + accountInfo);
-			Orgs orgs = gson.fromJson(accountInfo, Orgs.class);
-			return orgs;
+			orgs = gson.fromJson(accountInfo, collectionType);
+			
 		}
+		// give the org object a new Azuqua object with the org's key and secret
+		for (Org org : orgs) {
+			org.setAzuqua(new Azuqua(org.getAccessKey(), org.getAccessSecret()));
+		}
+		return orgs;
 	}
 
 	/**

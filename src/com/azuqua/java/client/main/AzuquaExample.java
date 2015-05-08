@@ -1,9 +1,10 @@
-package com.azuqua.java.client.main;
+	package com.azuqua.java.client.main;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.azuqua.java.client.Azuqua;
 import com.azuqua.java.client.model.Flo;
-import com.azuqua.java.client.model.Orgs;
 import com.azuqua.java.client.model.Org;
 
 
@@ -14,8 +15,8 @@ import com.azuqua.java.client.model.Org;
  *
  */
 public class AzuquaExample {
-	private static String access_key = "";
-	private static String access_secret = "";
+	private static String access_key = null;
+	private static String access_secret = null;
 	
 	/**
 	 * In this example, we're making a calling to the 
@@ -43,9 +44,17 @@ public class AzuquaExample {
 		List<Flo> flos = (List<Flo>) azuqua.getFlos();
 				
 		for(Flo flo : flos) {
-			System.out.println("Alias: " + flo.getAlias());
-			String response = flo.invoke("{\"abc\":\"foo@azuqua.com\"}");
+			String response = flo.invoke("{\"a\":\"foo@azuqua.com\"}");
 			System.out.println("response: " + response);
+			
+			// Additional flo methods
+			// Returns a JSON string with the flo details.
+			System.out.println(flo.read());
+			// Disables the flo. Returns a JSON string with the flo details.
+			System.out.println(flo.disable());
+			// Enables the flo. Returns a JSON string with the flo details.
+			System.out.println(flo.enable());
+
 		}
 		
 		System.out.println("");
@@ -54,33 +63,18 @@ public class AzuquaExample {
 		
 		// invoke flos through your login credentials
 		Azuqua azuquaViaLogin = new Azuqua();
-		Orgs orgs = azuquaViaLogin.login("email", "password", true);
 		
-		for(Org org : orgs.getOrgs()) {
-			// set the access key and access secret from the 
-			// specific org you're trying to invoke flos from
-			azuquaViaLogin.setAccessKey(org.getAccessKey());
-			azuquaViaLogin.setAccessSecret(org.getAccessSecret());
-			
+		// grab login credentials from the system env variables.
+		Map<String, String> env = System.getenv();
+		String email = env.get("AZUQUA_EMAIL");
+		String password = env.get("AZUQUA_PASSWORD");
+		Collection<Org> orgs = azuquaViaLogin.login(email, password, true);
+		
+		for(Org org : orgs) {			
 			for(Flo flo : org.getFlos()) {
-				out(method, "Alias: " + flo.getAlias());
-				out(method, "Name: " + flo.getName());
-				
-				// give a reference to the Azuqua object so that 
-				// the flo can make Azuqua API calls
-				flo.setAzuqua(azuquaViaLogin);
-				
-				String resp = flo.invoke("{\"abc\":\"foo@azuqua.com\"}");
-				out(method, "resp login method: " + resp);
+				String resp = flo.invoke("{\"a\":\"foo@azuqua.com\"}");
+				System.out.println(	);
 			}
 		}
-	}
-		
-	/**
-	 * Wrapper for System.out.println.
-	 * @param objects
-	 */
-	public static void out(String method, String msg) {
-		System.out.println(AzuquaExample.class.getName() + "." + method + ": " + msg);
 	}
 }
