@@ -14,8 +14,8 @@ import com.azuqua.java.client.model.Org;
  *
  */
 public class AzuquaExample {
-	private static String access_key = "e58585ac5731968df9c2e42eedf6baa9a7761635";
-	private static String access_secret = "b843b03f0b5d2a2c713c7e1dec89000c5acf1b2777b4cbf27b5c0a5d7cd35d2d";
+	private static String access_key = "";
+	private static String access_secret = "";
 	
 	/**
 	 * In this example, we're making a calling to the 
@@ -54,7 +54,7 @@ public class AzuquaExample {
 		
 		// invoke flos through your login credentials
 		Azuqua azuquaViaLogin = new Azuqua();
-		Orgs orgs = azuquaViaLogin.login("quy@azuqua.com", "password", true);
+		Orgs orgs = azuquaViaLogin.login("email", "password", true);
 		
 		for(Org org : orgs.getOrgs()) {
 			// set the access key and access secret from the 
