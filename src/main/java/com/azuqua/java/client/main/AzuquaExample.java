@@ -8,8 +8,7 @@ import com.azuqua.java.client.model.Org;
 
 
 /**
- * Main method displays how to use the Azuqua object to make 
- * Azuqua API calls. 
+ * Main method displays how to use the Azuqua object to make Azuqua API calls.
  * @author quyle
  *
  */

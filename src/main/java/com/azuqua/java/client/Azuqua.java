@@ -7,28 +7,27 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
-import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.Vector;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HttpsURLConnection;
+import javax.xml.bind.DatatypeConverter;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.azuqua.java.client.model.*;
+import lombok.Data;
+import lombok.extern.java.Log;
 
 /**
  * <p>Enables the caller to make requests to the Azuqua API.</p>
@@ -72,15 +71,19 @@ for(Org org : orgs.getOrgs()) {
  * @author quyle
  *
  */
+@Log
+@Data
 public class Azuqua {
-	private boolean DEBUG = true;
 	private Gson gson = new Gson();
-	private Vector<Flo> floCache = new Vector<Flo>();
+	private Vector<Flo> floCache = new Vector<>();
 	
 	// routes
 	public final static String invokeRoute = "/flo/:id/invoke";
 	public final static String listRoute = "/account/flos";	
 	public final static String accountsInfoRoute = "/account/data";
+    public final static String telemetryData = "/telemetry/:alias/:exec/data";
+    public final static String telemetryMetrics = "/telemetry/:alias/:exec/metrics";
+
 								
 	// http options
 	private String host = "api.azuqua.com";
@@ -90,28 +93,27 @@ public class Azuqua {
 	// account
 	private String accessKey;
 	private String accessSecret;
-	
-    final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    /**
-     * Custom implementation of DatatypeConverter.printHexBinary() method. Not as 
-     * fast, but works just fine for this purpose. This method is needed because 
-     * Android doesn't have the DatatypeConverter object. In the futute, we should
-     * use a cross platform implementation such as the Apache codec jar.
-     * @param bytes
-     * @return
-     */
-    private String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for ( int j = 0; j < bytes.length; j++ ) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
+
+	final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
+	/**
+	 * Custom implementation of DatatypeConverter.printHexBinary() method. Not as
+	 * fast, but works just fine for this purpose. This method is needed because
+	 * Android doesn't have the DatatypeConverter object. In the futute, we should
+	 * use a cross platform implementation such as the Apache codec jar.
+	 * @param bytes
+	 * @return
+	 */
+	private String bytesToHex(byte[] bytes) {
+		char[] hexChars = new char[bytes.length * 2];
+		for ( int j = 0; j < bytes.length; j++ ) {
+			int v = bytes[j] & 0xFF;
+			hexChars[j * 2] = hexArray[v >>> 4];
+			hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+		}
+		return new String(hexChars);
+	}
 	
 	private String signData(String data, String verb, String path, String timestamp) throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
-		String method = "signData";
 		
 		Mac hmac = Mac.getInstance("HmacSHA256");
 		SecretKeySpec key = new SecretKeySpec(this.accessSecret.getBytes("UTF-8"), "HmacSHA256");
@@ -119,62 +121,35 @@ public class Azuqua {
 		
 		String meta = verb + ":" + path + ":" + timestamp;
 		String dataToDigest = meta + data;
-		out(method, "data to digest " + dataToDigest);
 		
 		byte[] digest = hmac.doFinal(dataToDigest.getBytes("UTF-8"));
-		String digestString = bytesToHex(digest).toLowerCase();
-		out(method, "digested string " + digestString);		
-		
-		return 	digestString;
+		return DatatypeConverter.printHexBinary(digest).toLowerCase();
+//		return bytesToHex(digest).toLowerCase();
 	}
 	
 	private String getISOTime() {
 		TimeZone timezone = TimeZone.getTimeZone("UTC");
 	    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	    df.setTimeZone(timezone);
-	    String timestamp = df.format(new Date());
-	    
-	    return timestamp;
-	}
-	
-	private void printHeaders(String verb, URLConnection connection, URL apiUrl) {
-		String method = "printHeaders";
-	    out(method, "headers =====================");
-	    String curl = "curl -i ";
-	    
-		for (Entry<String, List<String>> k : connection.getRequestProperties().entrySet()) {
-		    for (String v : k.getValue()){
-		         out(method, k.getKey() + ":" + v);
-		         curl += "-H \"" + k.getKey() + ":" + v + "\" ";
-		    }
-		}
-		
-		curl += " --verbose ";
-		if (verb.toUpperCase().equals("POST")) {
-			curl += " -X POST -d \'{ \"abc\":\"this is a test.\" }' ";
-		}
-		curl += apiUrl.toString();
-		out(method, "curl: " + curl);
-		out(method, "headers =====================");
-		out(method, "DEBUG =======================");
-	    out(method, "agent: " + connection.getRequestProperty("agent"));
-	    out(method, "url: " + apiUrl.toString());	
-	    out(method, "METHOD: " + ((HttpURLConnection) connection).getRequestMethod());
-	    out(method, "host " + apiUrl.getHost());
-	    out(method, "DEBUG =======================");
+	    return df.format(new Date());
 	}
 	
 	/**
-	 * Makes a request call to the Azuqua API.
-	 * @param verb A String that is either GET or POST.
-	 * @param Path REST API route.
+	 * <p>Makes a request call to the Azuqua API.</p>
+	 *
+     * @param verb A String that is either GET or POST.
+	 * @param path REST API route.
 	 * @param data Data to send to the Azuqua web service.
-	 * @return
-	 * @throws Exception
+	 *
+     * @return The return payload as a String. The string will have a
+     * JSON and it's up the user to decide on how they want to handle this.
+	 *
+     * @throws IOException
+     * @throws InvalidKeyException
+     * @throws NoSuchAlgorithmException
+     *
 	 */
-	public String makeRequest(String verb, String path, String data) throws Exception {
-		String method = "makeRequest";
-		
+	public String makeRequest(String verb, String path, String data) throws IOException, InvalidKeyException, NoSuchAlgorithmException {
 		URLConnection connection;
 		String timestamp = getISOTime();
 		
@@ -201,9 +176,7 @@ public class Azuqua {
 			}
 			
 			connection.setRequestProperty("host", this.host);
-			
-//			printHeaders(verb, connection, apiUrl);
-					    
+
 		    if (verb.toUpperCase().equals("POST")) {
 			    DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
 			    wr.writeBytes(data);
@@ -211,10 +184,9 @@ public class Azuqua {
 			    wr.close();
 		    }
 		    
-		    int status = ((HttpURLConnection) connection).getResponseCode();
-		    out(method, "response code " + status);
-		    StringBuffer response = new StringBuffer();
-		    if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
+		    Integer status = ((HttpURLConnection) connection).getResponseCode();
+		    StringBuilder response = new StringBuilder();
+            if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
 			    InputStream is = connection.getInputStream();
 			    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
 			    String line;
@@ -224,10 +196,7 @@ public class Azuqua {
 			    }
 			    rd.close();
 		    }
-		    out(method, "response " + response.toString());
 		    return response.toString();
-		} catch(Exception e) {
-			throw e;
 		}
 		finally {
 			((HttpURLConnection) connection).disconnect();
@@ -237,13 +206,12 @@ public class Azuqua {
 	/**
 	 * Makes a request call to the Azuqua API.
 	 * @param verb A String that is either GET or POST.
-	 * @param Path REST API route.
+	 * @param path REST API route.
 	 * @param data Data to send to the Azuqua web service.
 	 * @return
 	 * @throws Exception
 	 */
-	public URLConnection makeRequestForInputStream(String verb, String path, String data) throws Exception {
-		String method = "makeRequest";
+	public URLConnection makeRequestForInputStream(String verb, String path, String data) throws IOException, InvalidKeyException, NoSuchAlgorithmException {
 		
 		URLConnection connection;
 		String timestamp = getISOTime();
@@ -256,49 +224,29 @@ public class Azuqua {
 		URL apiUrl = new URL(this.protocol, this.host, this.port, path);
 		connection = this.protocol.equals("https") ? (HttpsURLConnection) apiUrl.openConnection() : (HttpURLConnection) apiUrl.openConnection();
 		
-		try {			
-			connection.setUseCaches(false);
-		    connection.setDoOutput(true);
-			connection.setDoInput(true);
-			((HttpURLConnection) connection).setRequestMethod(verb.toUpperCase());
-			connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-			connection.setRequestProperty("Content-Length", "" + Integer.toString(data.getBytes().length));
-			connection.setRequestProperty("x-api-timestamp", timestamp);
-			
-			if (signedData != null) {
-				connection.setRequestProperty("x-api-hash", signedData);
-				connection.setRequestProperty("x-api-accessKey", this.accessKey);
-			}
-			
-			connection.setRequestProperty("host", this.host);
-			
-//			printHeaders(verb, connection, apiUrl);
-					    
-		    if (verb.toUpperCase().equals("POST")) {
-			    DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
-			    wr.writeBytes(data);
-			    wr.flush();
-			    wr.close();
-		    }
-		    
-//		    int status = ((HttpURLConnection) connection).getResponseCode();
-//		    out(method, "response code " + status);
-//		    StringBuffer response = new StringBuffer();
-//		    if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
-//			    InputStream is = connection.getInputStream();
-//			    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-//			    String line;
-//			    while((line = rd.readLine()) != null) {
-//			    	response.append(line);
-//			    	response.append('\r');
-//			    }
-//			    rd.close();
-//		    	return connection.getInputStream();
-//		    }
-		    return connection;
-		} catch(Exception e) {
-			throw e;
-		}
+
+        connection.setUseCaches(false);
+        connection.setDoOutput(true);
+        connection.setDoInput(true);
+        ((HttpURLConnection) connection).setRequestMethod(verb.toUpperCase());
+        connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+        connection.setRequestProperty("Content-Length", "" + Integer.toString(data.getBytes().length));
+        connection.setRequestProperty("x-api-timestamp", timestamp);
+
+        if (signedData != null) {
+            connection.setRequestProperty("x-api-hash", signedData);
+            connection.setRequestProperty("x-api-accessKey", this.accessKey);
+        }
+
+        connection.setRequestProperty("host", this.host);
+        if (verb.toUpperCase().equals("POST")) {
+            DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
+            wr.writeBytes(data);
+            wr.flush();
+            wr.close();
+        }
+        return connection;
+
 	}
 	
 	/**
@@ -336,7 +284,7 @@ public class Azuqua {
 	public Azuqua(){}
 	
 	/**
-	 * Returns a collection of flos. 
+	 * <p>Returns a collection of flos.</p>
 	 * @param refresh
 	 * @return
 	 * @throws AzuquaException
@@ -348,8 +296,7 @@ public class Azuqua {
 				String out = null;
 				try {
 					out = makeRequest("GET", path, "");
-				} catch (InvalidKeyException | NoSuchAlgorithmException | 
-						IllegalStateException | IOException e) {
+				} catch (InvalidKeyException | NoSuchAlgorithmException | IllegalStateException | IOException e) {
 					throw new AzuquaException(e);
 				}
 				Type collectionType = new TypeToken< Collection<Flo> >(){}.getType();
@@ -398,17 +345,13 @@ public class Azuqua {
 	}
 	
 	/**
-	 * Log on with your username and password. This method returns an 
-	 * Orgs object which contains a list of Org objects. Each Org object
-	 * will contain a list of Flo objects. Check out the specific classes 
-	 * for more information regarding available methods. 
+	 * <p>
+     *     Log on with your username and password. This method returns an Orgs object which contains a list of Org objects. Each Org object will contain a list of Flo objects. Check out the specific classes for more information regarding available methods.
+	 * </p>
 	 * 
-	 * Set streamOrgsJson to true if the device you are using has memory 
-	 * constraints. Once the Azuqua web service has verified your username 
-	 * and password, the web service returns an orgs JSON, which can be large.
-	 * This Orgs JSON string will then be deserialized into an Orgs object.
-	 * If streamOrgsJson is set to true, the Orgs JSON stream will be streamed 
-	 * into the deserialization method.
+	 * <p>
+     *     Set streamOrgsJson to true if the device you are using has memory constraints. Once the Azuqua web service has verified your username and password, the web service returns an orgs JSON, which can be large. This Orgs JSON string will then be deserialized into an Orgs object. If streamOrgsJson is set to true, the Orgs JSON stream will be streamed into the deserialization method.
+	 * </p>
 	 * @param username
 	 * @param password
 	 * @param streamOrgsJson specifies whether the user wants the orgs 
@@ -418,7 +361,6 @@ public class Azuqua {
 	public Orgs login(String username, String password, boolean streamOrgsJson) throws Exception {
 		String method = "login";
 		String loginInfo = gson.toJson(new LoginInfo(username, password));
-		out(method, "username: " + username);
 		
 		if (streamOrgsJson) {
 			URLConnection connection = null;
@@ -436,28 +378,8 @@ public class Azuqua {
 		} 
 		else {
 			String accountInfo = makeRequest("POST", accountsInfoRoute, loginInfo);
-			out(method, "accountInfo: " + accountInfo);
 			Orgs orgs = gson.fromJson(accountInfo, Orgs.class);
 			return orgs;
 		}
-	}
-
-	/**
-	 * Wrapper for System.out.println.
-	 * @param objects
-	 */
-	public void out(String method, String msg) {
-		if (DEBUG) {
-			System.out.println(Azuqua.class.getName() + "." + method + ": " + msg);
-		}
-	}
-
-
-	public void setAccessKey(String accessKey) {
-		this.accessKey = accessKey;
-	}
-	
-	public void setAccessSecret(String accessSecret) {
-		this.accessSecret = accessSecret;
 	}
 }
