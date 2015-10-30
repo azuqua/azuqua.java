@@ -75,7 +75,7 @@ for(Org org : orgs.getOrgs()) {
 @Data
 public class Azuqua {
 	private Gson gson = new Gson();
-	private Vector<Flo> floCache = new Vector<>();
+	private Vector<Flo> floCache = new Vector<Flo>();
 	
 	// routes
 	public final static String invokeRoute = "/flo/:id/invoke";
@@ -296,7 +296,7 @@ public class Azuqua {
 				String out = null;
 				try {
 					out = makeRequest("GET", path, "");
-				} catch (InvalidKeyException | NoSuchAlgorithmException | IllegalStateException | IOException e) {
+				} catch (Exception e) {
 					throw new AzuquaException(e);
 				}
 				Type collectionType = new TypeToken< Collection<Flo> >(){}.getType();
@@ -323,8 +323,7 @@ public class Azuqua {
 				String out = null;
 				try {
 					out = makeRequest("GET", path, "");
-				} catch (InvalidKeyException | NoSuchAlgorithmException | 
-						IllegalStateException | IOException e) {
+				} catch (Exception e) {
 					throw new AzuquaException(e);
 				}
 				Type collectionType = new TypeToken< Collection<Flo> >(){}.getType();
