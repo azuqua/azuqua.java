@@ -16,3 +16,8 @@ hs_err_pid*
 
 .idea
 azuqua.java.iml
+/target/
+.settings
+.classpath
+.project
+
