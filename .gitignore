@@ -16,7 +16,14 @@ hs_err_pid*
 
 .idea
 azuqua.java.iml
-/target/
+target/classes
+target/generated-sources
+target/generated-test-sources
+target/javadoc-bundle-options
+target/maven-archiver
+target/maven-status
+target/surefire-reports
+target/test-classes
 .settings
 .classpath
 .project
