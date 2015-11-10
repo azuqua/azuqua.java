@@ -2,6 +2,7 @@ import com.azuqua.java.client.Azuqua;
 import com.azuqua.java.client.exceptions.ResumeIdIsNullException;
 import com.azuqua.java.client.AzuquaResponse;
 import com.azuqua.java.client.Flo;
+import com.google.gson.JsonObject;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -37,11 +38,12 @@ public class AzuquaTest {
         assertEquals(443, azuqua.getPort());
 
         Collection<Flo> flos = azuqua.getFlos();
-//        assertEquals("I only have one test flo in my account.", 2, flos.size());
 
         for (Flo flo : flos) {
             if (flo.getAlias().equals("9d88f3f06814482eafa7a411fb12199c")) {
-                AzuquaResponse response = flo.invoke("{\"a\":\"this is a very simple test\"}");
+                JsonObject data = new JsonObject();
+                data.addProperty("a", "this is a very simple test");
+                AzuquaResponse response = flo.invoke(data.toString());
 
                 // test for valid uuid for x-flo-instance
                 assertNotNull("xFloInstance property should not be null", response.getXFloInstance());
@@ -57,7 +59,11 @@ public class AzuquaTest {
     }
 
     /**
-     * Invokes a resume capable FLO where the invoke takes a json with property a, the resume takes a json with a property b
+     * <p>
+     *     Invokes a resume capable FLO where the invoke takes "a" json with
+     *     property a, the resume takes a json with a property "b"
+     * </p>
+     *
      * @throws NoSuchAlgorithmException
      * @throws InvalidKeyException
      * @throws IOException
@@ -70,16 +76,20 @@ public class AzuquaTest {
 
         // Azuqua#getFloInstance accepts the flo name (can be any name) and the FLO alias.
         Flo flo = azuqua.getFloInstance("resume", "90bac28b901371bc8a4ea3f7f2aa9d92");
-        AzuquaResponse invokeResponse = flo.invoke("{\"a\":\"this is a very simple test\"}");
+        JsonObject invokeData = new JsonObject();
+        invokeData.addProperty("a", "this is a very simple test");
+        AzuquaResponse invokeResponse = flo.invoke(invokeData.toString());
         TimeUnit.SECONDS.sleep(5);
-        AzuquaResponse resumeResponse = flo.resume("{\"b\":\"resuming!\"}");
-        System.out.println(invokeResponse.getResponse());
+
+        JsonObject resumeData =  new JsonObject();
+        resumeData.addProperty("b", "resuming!");
+        AzuquaResponse resumeResponse = flo.resume(resumeData.toString());
 
         assertTrue("resume capable flos should return {\"response\":\"success\"} " +
                 "for a 200 response", invokeResponse.getResponse().contains("success"));
 
         assertTrue(resumeResponse.getResponse().contains("this is a very simple test"));
-//        assertTrue(resumeResponse.getResponse().contains("resuming!"));
+        assertTrue(resumeResponse.getResponse().contains("resuming!"));
     }
 
     /**

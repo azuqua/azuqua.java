@@ -21,16 +21,21 @@ import javax.xml.bind.DatatypeConverter;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
 
 /**
  * <p>Enables the caller to make requests to the Azuqua API.</p>
  *
  * <pre>
+ *     // get a collection of flos.
  *     Azuqua azuqua = new Azuqua(ACCESS_KEY, ACCESS_SECRET);
  *     for (Flo flo : azuqua.getFlos()) {
- *         AzuquaResponse resp = flo.invoke(data);
+ *         if (flo.getName().equals(nameOfFloYouWantToExecute)) {
+ *             AzuquaResponse resp = flo.invoke(data);
+ *         }
  *     }
+ *
+ *     // if you already know the alias of the flo you want to execute
+ *     Flo flo = azuqua.getFloInstance(alias);
  * </pre>
  * @author quyle
  *
