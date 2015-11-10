@@ -47,9 +47,9 @@ flo.invoke(requestPayload};
 Javadocs 
 ========
 
-Javadocs are located in the target folder under the site folder:
+Javadocs are located under 
 
-[Javadocs](target/site/index.html)
+`target/site/apidocs`
 
 
 
