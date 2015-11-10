@@ -25,8 +25,7 @@ There's a prebuilt jar file with all the dependencies jars built with JDK 1.8 vi
 Usage
 =====
 
-```
-
+```java
 Azuqua azuqua = new Azuqua("access key", "access secret");
 List<Flo> flos = (List<Flo>) azuqua.getFlos();
 
@@ -35,10 +34,22 @@ for(Flo flo : flos) {
 	String response = flo.invoke("{\"foo\":\"bar\"}");
 }
 
+// if you know the alias associated with the key and secret 
+// and don't want to deal with the going through the flos 
+// collection.
+String floName = "some flo name, can be anything";
+String floAlias = "alias";
+String requestPayload = "some json";
+Flo flo = azuqua.getFloInstance(floName, floAlias);
+flo.invoke(requestPayload};
 ```
 
 Javadocs 
 ========
+
+Javadocs are located in the target folder under the site folder:
+
+[Javadocs](target/site/index.html)
 
 
 
