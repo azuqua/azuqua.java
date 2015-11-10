@@ -1,10 +1,15 @@
 import com.azuqua.java.client.Azuqua;
-import com.azuqua.java.client.model.AzuquaResponse;
-import com.azuqua.java.client.model.Flo;
+import com.azuqua.java.client.exceptions.ResumeIdIsNullException;
+import com.azuqua.java.client.AzuquaResponse;
+import com.azuqua.java.client.Flo;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -24,9 +29,10 @@ public class AzuquaTest {
     }
 
     @Test
-    public void getFlosTest() throws Exception {
+    public void floInvokeTest() throws Exception {
         assertNotNull(host);
         Azuqua azuqua = new Azuqua(key, secret, host, 443);
+
         assertEquals(host, azuqua.getHost());
         assertEquals(443, azuqua.getPort());
 
@@ -46,6 +52,31 @@ public class AzuquaTest {
             // test the response body contains whatever we passed it
             assertTrue(response.getResponse().contains("this is a very simple test"));
         }
+    }
+
+    /**
+     * Invokes a resume capable FLO where the invoke takes a json with property a, the resume takes a json with a property b
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws IOException
+     * @throws ResumeIdIsNullException
+     * @throws InterruptedException
+     */
+    @Test
+    public void floResumeTest() throws NoSuchAlgorithmException, InvalidKeyException, IOException, ResumeIdIsNullException, InterruptedException {
+        Azuqua azuqua = new Azuqua(key, secret, host, 443);
+        Flo flo = azuqua.getFloInstance("resume", "90bac28b901371bc8a4ea3f7f2aa9d92");
+        AzuquaResponse invokeResponse = flo.invoke("{\"a\":\"this is a very simple test\"}");
+        TimeUnit.SECONDS.sleep(5);
+        AzuquaResponse resumeResponse = flo.resume("{\"b\":\"resuming!\"}");
+
+        assertTrue("resume capable flos should return {\"response\":\"success\"} " +
+                "for a 200 response", invokeResponse.getResponse().equals("{\"response\":\"success\"}"));
+
+        assertTrue(resumeResponse.getResponse().contains("this is a very simple test"));
+        assertTrue(resumeResponse.getResponse().contains("resuming!"));
+
+
     }
 
     /**

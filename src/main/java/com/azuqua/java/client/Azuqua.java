@@ -12,10 +12,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.Vector;
+import java.util.*;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -25,7 +22,6 @@ import javax.xml.bind.DatatypeConverter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import com.azuqua.java.client.model.*;
 
 /**
  * <p>Enables the caller to make requests to the Azuqua API.</p>
@@ -45,7 +41,8 @@ public class Azuqua {
 	
 	// routes
 	public final static String invokeRoute = "/flo/:id/invoke";
-	public final static String listRoute = "/account/flos";	
+    public final static String resumeRoute = "/flo/:exec/resume";
+    public final static String listRoute = "/account/flos";
 	public final static String accountsInfoRoute = "/account/data";
     public final static String telemetryData = "/telemetry/:alias/:exec/data";
     public final static String telemetryMetrics = "/telemetry/:alias/:exec/metrics";
@@ -73,7 +70,6 @@ public class Azuqua {
      * @throws UnsupportedEncodingException UTF-8 encoding is not supported.
      */
 	private String signData(String data, String verb, String path, String timestamp) throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
-		
 		Mac hmac = Mac.getInstance("HmacSHA256");
 		SecretKeySpec key = new SecretKeySpec(this.accessSecret.getBytes("UTF-8"), "HmacSHA256");
 		hmac.init(key);
@@ -314,51 +310,49 @@ public class Azuqua {
             return this.floCache;
         }
 	}
-	
-	/**
-	 * <p>
-     *     Log on with your username and password. This method returns an Orgs object which contains a
-     *     list of Org objects. Each Org object will contain a list of Flo objects. Check out the specific
-     *     classes for more information regarding available methods.
-	 * </p>
-	 * 
-	 * <p>
-     *     Set streamOrgsJson to true if the device you are using has memory constraints. Once the Azuqua web
-     *     service has verified your username and password, the web service returns an orgs JSON, which can be
-     *     large. This Orgs JSON string will then be deserialized into an Orgs object. If streamOrgsJson is set
-     *     to true, the Orgs JSON stream will be streamed into the deserialization method.
-	 * </p>
-	 * @param username The username of the account.
-	 * @param password The password of the account.
-	 * @param streamOrgsJson specifies whether the user wants the orgs 
-	 * @return an Orgs object.
-     * @throws IOException There was a problem establishing a connection to the Azuqua server.
-     * @throws InvalidKeyException There was a problem generating the hash for the x-api-hash for the header.
-     * @throws NoSuchAlgorithmException The HmacSHA256 algorithm isn't available for use.
-	 */
-	public Orgs login(String username, String password, boolean streamOrgsJson) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
-		String loginInfo = gson.toJson(new LoginInfo(username, password));
-		
-		if (streamOrgsJson) {
-			URLConnection connection = null;
-			try {
-				connection = makeRequestForInputStream("POST", accountsInfoRoute, loginInfo);
-				InputStream is = connection.getInputStream();
-				InputStreamReader isr = new InputStreamReader(is);
-				JsonReader jsonReader = new JsonReader(isr);
-				Orgs orgs = gson.fromJson(jsonReader, Orgs.class);
-				return orgs;
-			}
-			finally {
-				((HttpURLConnection) connection).disconnect();
-			}
-		} 
-		else {
-			AzuquaResponse accountInfo = makeRequest("POST", accountsInfoRoute, loginInfo);
-			Orgs orgs = gson.fromJson(accountInfo.getResponse(), Orgs.class);
-			return orgs;
-		}
-	}
+
+    /**
+     * <p>
+     *     Creates a Flo object. Generates a random name for the Flo since one is not provided.
+     * </p>
+     * <p>
+     *     Note, if you are going to create a Flo instance via this method, the
+     *     Flo alias will need to belong to the access key and secret associated
+     *     with the Azuqua object. This is because the key and secret are
+     *     used to generate the hash to authenticate and authorize the user.
+     * </p>
+     * <pre>
+     *     Azuqua azuqua = new Azuqua(key, secret);
+     *     Flo flo = azuqua.getFloInstance(alias);
+     * </pre>
+     * @param alias
+     */
+    public Flo getFloInstance(String alias) {
+        String name = UUID.randomUUID().toString();
+        Flo flo = new Flo(name, alias);
+        flo.setAzuqua(this);
+        return flo;
+    }
+
+    /**
+     * <p>
+     *     Creates a Flo object with the provided name and alias.
+     * </p>
+     * <p>
+     *     Note, if you are going to create a Flo instance via this method, the
+     *     Flo alias will need to belong to the access key and secret associated
+     *     with the Azuqua object. This is because the key and secret are
+     *     used to generate the hash to authenticate and authorize the user.
+     * </p>
+     * @param name
+     * @param alias
+     * @return
+     */
+    public Flo getFloInstance(String name, String alias) {
+        Flo flo = new Flo(name, alias);
+        flo.setAzuqua(this);
+        return flo;
+    }
 
     public String getHost() {
         return host;

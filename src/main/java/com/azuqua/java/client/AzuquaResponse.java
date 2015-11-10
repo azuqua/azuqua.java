@@ -1,11 +1,11 @@
-package com.azuqua.java.client.model;
+package com.azuqua.java.client;
 
 /**
  * Created by quyle on 11/9/15.
  */
 public class AzuquaResponse {
     /**
-     * Represents the x-flo-instance header returned from Azuqua. Needed for FLO-resume.
+     * Represents the x-flo-instance header returned from Azuqua. Needed for FLO-resume capable FLOS.
      */
     private String xFloInstance;
 

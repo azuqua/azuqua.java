@@ -1,5 +1,6 @@
-package com.azuqua.java.client.model;
-import com.azuqua.java.client.Azuqua;
+package com.azuqua.java.client;
+import com.azuqua.java.client.exceptions.ResumeIdIsNullException;
+
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -23,18 +24,74 @@ public class Flo {
 	 */
 	private String alias;
 
+    /**
+     * The x-flo-instance header.
+     */
+    private String xFloInstance;
+
 	/**
 	 * Reference to the Azuqua object. Needed for the access key|secret and also for making requests to Azuqua.
 	 */
 	private Azuqua azuqua;
 
-	public Flo(String name, String alias){
+	protected Flo(String name, String alias){
 		this.name = name;
 		this.alias = alias;
 	}
 
+    /**
+     * Resumes a Flo. Throws a ResumeIdIsNullException if the resume id is null.
+     *
+     * @param json
+     * @return An AzuquaResponse object.
+     */
+    public AzuquaResponse resume(String json) throws InvalidKeyException, NoSuchAlgorithmException, IOException, ResumeIdIsNullException {
+        if (this.xFloInstance == null) {
+            throw new ResumeIdIsNullException();
+        }
+
+        String path = this.azuqua.resumeRoute.replace(":exec", this.xFloInstance);
+        AzuquaResponse out = azuqua.makeRequest("POST", path, json);
+
+        // can't call flo resume twice on the same id so set it to null for next go around
+        this.xFloInstance = null;
+
+        return out;
+    }
+
+    /**
+     * Resumes a Flo via the passed in parameter resumeId. Throws a ResumeIdIsNullException if the resume id is null.
+     *
+     * @param resumeId The flo resume id.
+     * @param json The serialized json.
+     * @return An AzuquaResponse object.
+     */
+    public AzuquaResponse resume(String resumeId, String json) throws ResumeIdIsNullException, NoSuchAlgorithmException, InvalidKeyException, IOException {
+        if (resumeId == null) {
+            throw new ResumeIdIsNullException();
+        }
+
+        String path = this.azuqua.resumeRoute.replace(":exec", resumeId);
+        AzuquaResponse out = azuqua.makeRequest("POST", path, json);
+
+        // can't call flo resume twice on the same id so set it to null for next go around
+        this.xFloInstance = null;
+
+        return out;
+    }
+
 	/**
-	 * Invokes a flo.
+     * <p>
+     *     Invokes a flo.
+     * </p>
+	 *
+     *
+     * * <p>
+     *     Sets the flo resume id if the FLO that has flo-resume capabilities.
+     *     When the Flo#invoke method is called, the resume id will be saved as an instance
+     *     property. This id will be use when the Flo#resume method is called.
+     * </p>
+	 * 
 	 * @param json A serialized json.
 	 * @return
      * @throws IOException There was a problem establishing a connection to the Azuqua server.
@@ -45,7 +102,8 @@ public class Flo {
 		String path = Azuqua.invokeRoute.replace(":id", this.alias);
 		AzuquaResponse out;
 		out = azuqua.makeRequest("POST", path, json);
-		return out;
+        this.xFloInstance = out.getXFloInstance();
+        return out;
 	}
 
 	/**
@@ -58,8 +116,7 @@ public class Flo {
 	 */
 	public AzuquaResponse telemetryData(String execId) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
 		String path = Azuqua.telemetryData.replace(":alias", this.alias).replace(":exec", execId);
-		AzuquaResponse out;
-		out = azuqua.makeRequest("GET", path, "");
+		AzuquaResponse out = azuqua.makeRequest("GET", path, "");
 		return out;
 	}
 
@@ -73,8 +130,7 @@ public class Flo {
 	 */
 	public AzuquaResponse telemetryMetrics(String execId) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
 		String path = Azuqua.telemetryMetrics.replace(":alias", this.alias).replace(":exec", execId);
-		AzuquaResponse out;
-		out = azuqua.makeRequest("GET", path, "");
+        AzuquaResponse out = azuqua.makeRequest("GET", path, "");
 		return out;
 	}
 
