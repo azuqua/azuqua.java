@@ -1,6 +1,4 @@
-/Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/model/AzuquaResponse.java
+/Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/exceptions/ResumeIdIsNullException.java
 /Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/Azuqua.java
-/Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/model/LoginInfo.java
-/Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/model/Flo.java
-/Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/model/Org.java
-/Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/model/Orgs.java
+/Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/AzuquaResponse.java
+/Users/quyle/IdeaProjects/azuqua.java/src/main/java/com/azuqua/java/client/Flo.java
