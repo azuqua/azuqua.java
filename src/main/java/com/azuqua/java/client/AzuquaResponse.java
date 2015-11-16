@@ -1,7 +1,14 @@
 package com.azuqua.java.client;
 
 /**
- * Created by quyle on 11/9/15.
+ * <p>
+ *     Object representing a HTTP response from Azuqua. Basically wraps the request body and x-flo-instance
+ *     header.
+ * </p>
+ *
+ * <p>
+ *     Created by quyle on 11/16/15.
+ * </p>
  */
 public class AzuquaResponse {
     /**
@@ -10,9 +17,22 @@ public class AzuquaResponse {
     private String xFloInstance;
 
     /**
-     * The body of the response as a String.
+     * Represents the entire of the body of the response coming
      */
-    private String response;
+    private String body;
+
+    /**
+     * Http status code.
+     */
+    private String status;
+
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
 
     public String getXFloInstance() {
         return xFloInstance;
@@ -20,13 +40,5 @@ public class AzuquaResponse {
 
     public void setXFloInstance(String xFloInstance) {
         this.xFloInstance = xFloInstance;
-    }
-
-    public String getResponse() {
-        return response;
-    }
-
-    public void setResponse(String response) {
-        this.response = response;
     }
 }
