@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="4" failures="0" name="AzuquaTest" time="6.461" errors="0" skipped="0">
+<testsuite tests="5" failures="0" name="AzuquaTest" time="3.393" errors="0" skipped="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_60.jdk/Contents/Home/jre/lib"/>
@@ -59,8 +59,9 @@
     <property name="sun.io.unicode.encoding" value="UnicodeBig"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase classname="AzuquaTest" name="floInvokeTest" time="1.239"/>
+  <testcase classname="AzuquaTest" name="floInvokeTest" time="1.04"/>
   <testcase classname="AzuquaTest" name="createAzuquaInstanceTest" time="0"/>
-  <testcase classname="AzuquaTest" name="floResumeTest" time="5.222"/>
+  <testcase classname="AzuquaTest" name="floResumeTest" time="2.143"/>
   <testcase classname="AzuquaTest" name="telemetryTest" time="0"/>
+  <testcase classname="AzuquaTest" name="floInvokeErrorTest" time="0.21"/>
 </testsuite>

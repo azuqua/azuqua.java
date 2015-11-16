@@ -30,7 +30,7 @@ import com.google.gson.reflect.TypeToken;
  *     Azuqua azuqua = new Azuqua(ACCESS_KEY, ACCESS_SECRET);
  *     for (Flo flo : azuqua.getFlos()) {
  *         if (flo.getName().equals(nameOfFloYouWantToExecute)) {
- *             AzuquaResponse resp = flo.invoke(data);
+ *             FloResponse resp = flo.invoke(data);
  *         }
  *     }
  *
@@ -42,6 +42,7 @@ import com.google.gson.reflect.TypeToken;
  */
 public class Azuqua {
 	private Gson gson = new Gson();
+
 	private Vector<Flo> floCache = new Vector<Flo>();
 	
 	// routes
@@ -104,7 +105,7 @@ public class Azuqua {
 	 *
      * @return
      * <p>
-     *     An AzuquaResponse object with two String properties:
+     *     An FloResponse object with two String properties:
      * </p>
      * <ul>
      *     <li>xFloInstance - x-flo-instance header property. Used for flo-resume.</li>
@@ -118,7 +119,7 @@ public class Azuqua {
      *
 	 */
 	public AzuquaResponse makeRequest(String verb, String path, String data) throws  IOException, InvalidKeyException, NoSuchAlgorithmException {
-		URLConnection connection;
+		HttpURLConnection connection;
 		String timestamp = getISOTime();
 		
 		String signedData = null;
@@ -133,7 +134,7 @@ public class Azuqua {
 			connection.setUseCaches(false);
 		    connection.setDoOutput(true);
 			connection.setDoInput(true);
-			((HttpURLConnection) connection).setRequestMethod(verb.toUpperCase());
+			connection.setRequestMethod(verb.toUpperCase());
 			connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
 			connection.setRequestProperty("Content-Length", "" + Integer.toString(data.getBytes().length));
 			connection.setRequestProperty("x-api-timestamp", timestamp);
@@ -152,26 +153,25 @@ public class Azuqua {
 			    wr.close();
 		    }
 
-			HttpURLConnection httpConnection = (HttpURLConnection) connection;
-		    Integer status = httpConnection.getResponseCode();
-            String xFloInstance = httpConnection.getHeaderField("x-flo-instance");
+		    Integer status = connection.getResponseCode();
+            String xFloInstance = connection.getHeaderField("x-flo-instance");
 
-		    StringBuilder response = new StringBuilder();
-            if (verb.toUpperCase().equals("GET") || verb.toUpperCase().equals("POST")) {
-			    InputStream is = connection.getInputStream();
-			    BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-			    String line;
-			    while((line = rd.readLine()) != null) {
-			    	response.append(line);
-			    	response.append('\r');
-			    }
-			    rd.close();
-		    }
+		    StringBuilder output = new StringBuilder();
 
-            AzuquaResponse azuquaResponse = new AzuquaResponse();
-            azuquaResponse.setResponse(response.toString());
-            azuquaResponse.setXFloInstance(xFloInstance);
-            return azuquaResponse;
+            InputStream is = status < 400 ? connection.getInputStream() : connection.getErrorStream();
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+            String line;
+            while((line = rd.readLine()) != null) {
+                output.append(line);
+                output.append('\r');
+            }
+            rd.close();
+
+
+            AzuquaResponse response = new AzuquaResponse();
+            response.setBody(output.toString());
+            response.setXFloInstance(xFloInstance);
+            return response;
 		}
 		finally {
 			((HttpURLConnection) connection).disconnect();
@@ -271,16 +271,14 @@ public class Azuqua {
 	public Collection<Flo> getFlos(boolean refresh) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
         if(refresh || floCache.size() < 1){
             String path = listRoute;
-            AzuquaResponse out = null;
-            out = makeRequest("GET", path, "");
+            AzuquaResponse out = makeRequest("GET", path, "");
             Type collectionType = new TypeToken< Collection<Flo> >(){}.getType();
-            Collection<Flo> collection = gson.fromJson(out.getResponse(), collectionType);
+            Collection<Flo> collection = gson.fromJson(out.getBody(), collectionType);
 
             // give each Flo a reference to this so it can make a request call
             for (Flo flo : collection) {
                 flo.setAzuqua(this);
             }
-
             return collection;
         }
         else{
@@ -298,12 +296,12 @@ public class Azuqua {
 	public Collection<Flo> getFlos() throws NoSuchAlgorithmException, InvalidKeyException, IOException {
         if (floCache.size() < 1) {
             String path = listRoute;
-            AzuquaResponse out = null;
-            out = makeRequest("GET", path, "");
+            AzuquaResponse out = makeRequest("GET", path, "");
 
             Type collectionType = new TypeToken<Collection<Flo>>() {
             }.getType();
-            Collection<Flo> collection = gson.fromJson(out.getResponse(), collectionType);
+
+            Collection<Flo> collection = gson.fromJson(out.getBody(), collectionType);
 
             // give each Flo a reference to this so it can make a request call
             for (Flo flo : collection) {

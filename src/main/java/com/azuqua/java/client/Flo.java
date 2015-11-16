@@ -1,5 +1,6 @@
 package com.azuqua.java.client;
 import com.azuqua.java.client.exceptions.ResumeIdIsNullException;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -13,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
  * @author quyle
  */
 public class Flo {
+	private static Gson gson = new Gson();
 
 	/**
 	 * The name of the FLO.
@@ -43,9 +45,9 @@ public class Flo {
      * Resumes a Flo. Throws a ResumeIdIsNullException if the resume id is null.
      *
      * @param json
-     * @return An AzuquaResponse object.
+     * @return An FloResponse object.
      */
-    public AzuquaResponse resume(String json) throws InvalidKeyException, NoSuchAlgorithmException, IOException, ResumeIdIsNullException {
+    public FloResponse resume(String json) throws InvalidKeyException, NoSuchAlgorithmException, IOException, ResumeIdIsNullException {
         if (this.xFloInstance == null) {
             throw new ResumeIdIsNullException();
         }
@@ -56,7 +58,7 @@ public class Flo {
         // can't call flo resume twice on the same id so set it to null for next go around
         this.xFloInstance = null;
 
-        return out;
+        return gson.fromJson(out.getBody(), FloResponse.class);
     }
 
     /**
@@ -64,9 +66,9 @@ public class Flo {
      *
      * @param resumeId The flo resume id.
      * @param json The serialized json.
-     * @return An AzuquaResponse object.
+     * @return An FloResponse object.
      */
-    public AzuquaResponse resume(String resumeId, String json) throws ResumeIdIsNullException, NoSuchAlgorithmException, InvalidKeyException, IOException {
+    public FloResponse resume(String resumeId, String json) throws ResumeIdIsNullException, NoSuchAlgorithmException, InvalidKeyException, IOException {
         if (resumeId == null) {
             throw new ResumeIdIsNullException();
         }
@@ -76,8 +78,7 @@ public class Flo {
 
         // can't call flo resume twice on the same id so set it to null for next go around
         this.xFloInstance = null;
-
-        return out;
+		return gson.fromJson(out.getBody(), FloResponse.class);
     }
 
 	/**
@@ -98,18 +99,21 @@ public class Flo {
      * @throws InvalidKeyException There was a problem generating the hash for the x-api-hash for the header.
      * @throws NoSuchAlgorithmException The HmacSHA256 algorithm isn't available for use.
 	 */
-	public AzuquaResponse invoke(String json) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
+	public FloResponse invoke(String json) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
 		String path = Azuqua.invokeRoute.replace(":id", this.alias);
-		AzuquaResponse out;
-		out = azuqua.makeRequest("POST", path, json);
-        this.xFloInstance = out.getXFloInstance();
-        return out;
+
+		AzuquaResponse out = azuqua.makeRequest("POST", path, json);
+		this.xFloInstance = out.getXFloInstance();
+
+		FloResponse response = gson.fromJson(out.getBody(), FloResponse.class);
+		response.setXFloInstance(this.xFloInstance);
+        return response;
 	}
 
 	/**
 	 *
 	 * @param execId The exec id of the flo.
-	 * @return AzuquaResponse object.
+	 * @return FloResponse object.
 	 * @throws IOException There was a problem establishing a connection to the Azuqua server.
 	 * @throws InvalidKeyException There was a problem generating the hash for the x-api-hash for the header.
 	 * @throws NoSuchAlgorithmException The HmacSHA256 algorithm isn't available for use.
@@ -123,7 +127,7 @@ public class Flo {
 	/**
 	 *
 	 * @param execId The exec id of the flo.
-	 * @return AzuquaResponse object
+	 * @return FloResponse object
 	 * @throws IOException There was a problem establishing a connection to the Azuqua server.
 	 * @throws InvalidKeyException There was a problem generating the hash for the x-api-hash for the header.
 	 * @throws NoSuchAlgorithmException The HmacSHA256 algorithm isn't available for use.
