@@ -46,7 +46,7 @@ azuqua.getFLOs(new OrgFLOsRequest() {
 });
 
 // Invoke FLO
-azuqua.injectFLO("floalias", "payload", new AsyncRequest() {
+azuqua.injectFLO("flo-alias", "payload", new AsyncRequest() {
     @Override
     public void onResponse(String response) {
         // returns reponse on success
