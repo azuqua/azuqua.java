@@ -11,11 +11,11 @@ Add azuqua-java maven dependency to your project
 Maven Dependency:
 
 ```xml 
-  <dependency>
-    <groupId>com.azuqua</groupId>
-    <artifactId>azuqua-java</artifactId>
-    <version>1.0.0</version>
-  </dependency>
+<dependency>
+  <groupId>com.azuqua</groupId>
+  <artifactId>azuqua-java</artifactId>
+  <version>1.0.0</version>
+</dependency>
 ```
 
 Build
