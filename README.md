@@ -14,7 +14,7 @@ Maven Dependency:
 <dependency>
   <groupId>com.azuqua</groupId>
   <artifactId>azuqua-java</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 
@@ -46,7 +46,7 @@ azuqua.getFLOs(new OrgFLOsRequest() {
 });
 
 // Invoke FLO
-azuqua.injectFLO("flo-alias", "payload", new AsyncRequest() {
+azuqua.runFLO("flo-alias", "payload", new AsyncRequest() {
     @Override
     public void onResponse(String response) {
         // returns reponse on success
