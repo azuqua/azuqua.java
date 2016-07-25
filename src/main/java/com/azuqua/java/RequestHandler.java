@@ -2,35 +2,38 @@ package com.azuqua.java;
 
 import com.azuqua.java.callbacks.AsyncRequest;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 
 /**
  * Created by SASi on 14-Jul-16.
  */
 public class RequestHandler {
 
-    private String url = null;
+    private String path = null;
     private String method = null;
     private String payload = "";
     private String timeStamp = null;
     private String signedData = null;
     private String accessKey = null;
+    private Routes routes = null;
     private AsyncRequest asyncRequest = null;
 
-    private HttpsURLConnection urlConnection = null;
+    private URLConnection urlConnection = null;
 
-    public RequestHandler(String url, String method, String payload, AsyncRequest asyncRequest) {
-        this.url = url;
+    public RequestHandler(Routes routes, String path, String method, String payload, AsyncRequest asyncRequest) {
+        this.routes = routes;
+        this.path = path;
         this.method = method;
         this.payload = payload;
         this.asyncRequest = asyncRequest;
     }
 
-    public RequestHandler(String url, String method, String payload, String timeStamp, String signedData, String accessKey, AsyncRequest asyncRequest) {
-        this.url = url;
+    public RequestHandler(Routes routes, String path, String method, String payload, String timeStamp, String signedData, String accessKey, AsyncRequest asyncRequest) {
+        this.routes = routes;
+        this.path = path;
         this.method = method.toUpperCase();
         this.payload = payload;
         this.timeStamp = timeStamp;
@@ -41,13 +44,13 @@ public class RequestHandler {
 
     public void execute() {
         try {
-            URL url = new URL(this.url);
+            URL url = new URL(routes.getProtocol(), routes.getHost(), routes.getPort(), path);
 
-            urlConnection = (HttpsURLConnection) url.openConnection();
+            urlConnection = url.openConnection();
 
             urlConnection.setUseCaches(false);
             urlConnection.setDoInput(true);
-            urlConnection.setRequestMethod(this.method);
+            ((HttpURLConnection) urlConnection).setRequestMethod(this.method);
             urlConnection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             urlConnection.setRequestProperty("host", url.getHost());
             urlConnection.setRequestProperty("Content-Length", "" + Integer.toString(this.payload.getBytes().length));
@@ -66,7 +69,7 @@ public class RequestHandler {
                 outputStream.close();
             }
 
-            int statusCode = urlConnection.getResponseCode();
+            int statusCode = ((HttpURLConnection) urlConnection).getResponseCode();
             System.out.println("Status Code " + statusCode);
 
             InputStream inputStream;
@@ -75,7 +78,7 @@ public class RequestHandler {
                 inputStream = urlConnection.getInputStream();
                 asyncRequest.onResponse(parseMessage(inputStream));
             } else {
-                inputStream = urlConnection.getErrorStream();
+                inputStream = ((HttpURLConnection) urlConnection).getErrorStream();
                 asyncRequest.onError(parseMessage(inputStream));
             }
 
@@ -83,7 +86,7 @@ public class RequestHandler {
 //            e.printStackTrace();
             asyncRequest.onError(e.toString());
         } finally {
-            urlConnection.disconnect();
+            ((HttpURLConnection) urlConnection).disconnect();
         }
     }
 

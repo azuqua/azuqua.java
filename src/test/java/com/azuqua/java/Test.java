@@ -1,16 +1,14 @@
 package com.azuqua.java;
 
 import com.azuqua.java.callbacks.AsyncRequest;
-import com.azuqua.java.callbacks.LoginRequest;
 import com.azuqua.java.callbacks.OrgFLOsRequest;
 import com.azuqua.java.models.AzuquaError;
 import com.azuqua.java.models.FLO;
-import com.azuqua.java.models.Org;
-import com.azuqua.java.models.User;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by SASi on 14-Jul-16.
@@ -26,6 +24,8 @@ public class Test {
     public static void main(String[] args) {
 
         azuqua = new Azuqua(ACCESS_KEY, ACCESS_SECRET);
+
+//        azuqua = new Azuqua(ACCESS_KEY, ACCESS_SECRET, "https", "api.azuqua.com", 443);
         getOrgFLOs();
     }
 
@@ -48,7 +48,7 @@ public class Test {
     private static void invokeFLO(FLO flo) {
         Gson gson = new Gson();
         Map<String, String> payload = new HashMap<String, String>();
-        azuqua.injectFLO(flo.getAlias(), gson.toJson(payload), new AsyncRequest() {
+        azuqua.runFLO(flo.getAlias(), gson.toJson(payload), new AsyncRequest() {
             @Override
             public void onResponse(String response) {
                 System.out.println(response);

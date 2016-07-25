@@ -1,19 +1,19 @@
 package com.azuqua.java;
 
 import com.azuqua.java.callbacks.AsyncRequest;
-import com.azuqua.java.callbacks.LoginRequest;
 import com.azuqua.java.callbacks.OrgFLOsRequest;
 import com.azuqua.java.models.AzuquaError;
 import com.azuqua.java.models.FLO;
-import com.azuqua.java.models.User;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
@@ -32,46 +32,26 @@ public class Azuqua {
     private RequestHandler requestHandler;
     private String accessKey;
     private String accessSecret;
+    private Routes routes = new Routes();
 
     public Azuqua(String accessKey, String accessSecret) {
         this.accessKey = accessKey;
         this.accessSecret = accessSecret;
     }
 
-
-    //    public void login(String email, String password, final LoginRequest loginRequest) {
-//
-//        JsonObject dataObject = new JsonObject();
-//        dataObject.addProperty("email", email);
-//        dataObject.addProperty("password", password);
-//
-//        requestHandler = new RequestHandler(Routes.BASE + Routes.ORG_LOGIN, Routes.METHOD_POST, gson.toJson(dataObject), new AsyncRequest() {
-//            @Override
-//            public void onResponse(String response) {
-//                User user = gson.fromJson(response, User.class);
-//                loginRequest.onResponse(user);
-//            }
-//
-//            @Override
-//            public void onError(String error) {
-//                AzuquaError azuquaError;
-//                try {
-//                    azuquaError = gson.fromJson(error, AzuquaError.class);
-//                } catch (Exception e) {
-//                    azuquaError = new AzuquaError(400, error);
-//                }
-//                loginRequest.onError(azuquaError);
-//            }
-//        });
-//
-//        requestHandler.execute();
-//    }
+    public Azuqua(String accessKey, String accessSecret, String protocol, String host, int port) {
+        this.accessKey = accessKey;
+        this.accessSecret = accessSecret;
+        routes.setProtocol(protocol);
+        routes.setHost(host);
+        routes.setPort(port);
+    }
 
     public void getFLOs(final OrgFLOsRequest orgFLOsRequest) {
         String timeStamp = getISOTime();
         String signedData = signDate("", Routes.METHOD_GET, Routes.ORG_FLOS, accessSecret, timeStamp);
 
-        requestHandler = new RequestHandler(Routes.BASE + Routes.ORG_FLOS, Routes.METHOD_GET, "", timeStamp, signedData,
+        requestHandler = new RequestHandler(routes, Routes.ORG_FLOS, Routes.METHOD_GET, "", timeStamp, signedData,
                 accessKey, new AsyncRequest() {
             @Override
             public void onResponse(String response) {
@@ -102,7 +82,7 @@ public class Azuqua {
 
         String signedData = signDate("", Routes.METHOD_GET, path, accessSecret, timeStamp);
 
-        requestHandler = new RequestHandler(Routes.BASE + path, Routes.METHOD_GET, "", timeStamp, signedData, accessKey, new AsyncRequest() {
+        requestHandler = new RequestHandler(routes, path, Routes.METHOD_GET, "", timeStamp, signedData, accessKey, new AsyncRequest() {
             @Override
             public void onResponse(String response) {
                 System.out.println(response);
@@ -124,21 +104,17 @@ public class Azuqua {
     }
 
     public void invokeFLO(String alias, String data, AsyncRequest asyncRequest) {
-        String path = Routes.FLO_INVOKE.replace(":alias", alias);
-        runFLO(path, data, asyncRequest);
+        runFLO(alias, data, asyncRequest);
     }
 
-    public void injectFLO(String alias, String data, AsyncRequest asyncRequest) {
+
+    public void runFLO(String alias, String data, final AsyncRequest asyncRequest) {
         String path = Routes.FLO_INJECT.replace(":alias", alias);
-        runFLO(path, data, asyncRequest);
-    }
-
-    private void runFLO(String path, String data, final AsyncRequest asyncRequest) {
         String timeStamp = getISOTime();
 
         String signedData = signDate(data, Routes.METHOD_POST, path, accessSecret, timeStamp);
 
-        requestHandler = new RequestHandler(Routes.BASE + path, Routes.METHOD_POST, data, timeStamp, signedData, accessKey, new AsyncRequest() {
+        requestHandler = new RequestHandler(routes, path, Routes.METHOD_POST, data, timeStamp, signedData, accessKey, new AsyncRequest() {
             @Override
             public void onResponse(String response) {
                 asyncRequest.onResponse(response);
