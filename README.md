@@ -14,7 +14,7 @@ Maven Dependency:
 <dependency>
   <groupId>com.azuqua</groupId>
   <artifactId>azuqua-java</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.2</version>
 </dependency>
 ```
 
@@ -30,6 +30,10 @@ Usage
 
 ```java
 Azuqua azuqua = new Azuqua("access key", "access secret");
+
+(or)
+
+Azuqua azuqua = new Azuqua("access key", "access secret", "protocol", "host", port);
 
 // Get FLOs 
 azuqua.getFLOs(new OrgFLOsRequest() {
