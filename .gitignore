@@ -18,3 +18,7 @@ settings.xml
 src/main/resources/
 target/surefire/
 azuqua-java.iml
+
+azuqua.java.iml
+src/main/main.iml
+src/test/test.iml
