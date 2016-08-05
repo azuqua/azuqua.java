@@ -3,19 +3,13 @@ Azuqua Java Library
 
 This library provides a Java interface for interacting with your Azuqua flos. The full source is available here in addition to the final jar file.
 
-Dependencies
-============
+Usage
+=====
 
-The Azuqua Java client depends on the Gson 2.4.
+Add azuqua-java maven dependency to your project
 
-Maven Dependency:
+The first is by specifying your access key and access secret:
 
-```
-<dependency>
-	<groupId>com.google.code.gson</groupId>
-	<artifactId>gson</artifactId>
-	<version>2.4</version>
-</dependency>
 ```
 
 Build
@@ -23,55 +17,42 @@ Build
 
 Requirements :
  
-* Minimum JDK 1.5
-* maven
-
-This project uses maven to build the jar file:
- 	
-```
-git clone https://github.com/azuqua/azuqua.java
-cd azuqua.java
-mvn package -Dmaven.test.skip=true
-```
-
-The package goal builds two jar files: 
-
-* azuqua.java-[VERSION]-jar-with-dependencies.jar 
-* azuqua.java-[VERSION].jar
-
-The `azuqua.java-[VERSION]-jar-with-dependencies.jar` contains all the dependencies required for the Azuqua Java client to work. The azuqua.java-[VERSION].jar contains just the compiled code from this repo. It's assumed that the user will attach the required jars to their project externally.
-
-There's a prebuilt jar file with all the dependencies jars built with JDK 1.8 via the targets folder.
-
+* Minimum JDK 1.6
 
 Usage
 =====
 
 ```java
 Azuqua azuqua = new Azuqua("access key", "access secret");
-List<Flo> flos = (List<Flo>) azuqua.getFlos();
 
-flos = (List<Flo>) azuqua.getFlos(true);		
-for(Flo flo : flos) {
-	String response = flo.invoke("{\"foo\":\"bar\"}");
-}
+(or)
 
-// if you know the alias associated with the key and secret 
-// and don't want to deal with the going through the flos 
-// collection.
-String floName = "some flo name, can be anything";
-String floAlias = "alias";
-String requestPayload = "some json";
-Flo flo = azuqua.getFloInstance(floName, floAlias);
-flo.invoke(requestPayload};
+Azuqua azuqua = new Azuqua("access key", "access secret", "protocol", "host", port);
+
+// Get FLOs 
+azuqua.getFLOs(new OrgFLOsRequest() {
+    @Override
+    public void onResponse(List<FLO> list) {
+        // returns list of FLOs on success
+    }
+
+    @Override
+    public void onError(AzuquaError azuquaError) {
+        // returns error details on failure
+        System.out.println(azuquaError.getMessage());
+    }
+});
+
+// Invoke FLO
+azuqua.runFLO("flo-alias", "payload", new AsyncRequest() {
+    @Override
+    public void onResponse(String response) {
+        // returns reponse on success
+    }
+
+    @Override
+    public void onError(String error) {
+        // returns error details on failure
+    }
+});
 ```
-
-Javadocs 
-========
-
-Javadocs are located under 
-
-`target/site/apidocs`
-
-
-

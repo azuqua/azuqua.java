@@ -1,3 +1,4 @@
+# Created by .ignore support plugin (hsz.mobi)
 ### Java template
 *.class
 
@@ -5,27 +6,19 @@
 .mtj.tmp/
 
 # Package Files #
-#*.jar
+*.jar
 *.war
 *.ear
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-# Created by .ignore support plugin (hsz.mobi)
+.idea/
+settings.xml
+src/main/resources/
+target/surefire/
+azuqua-java.iml
 
-.idea
 azuqua.java.iml
-target/classes
-target/generated-sources
-target/generated-test-sources
-target/javadoc-bundle-options
-target/maven-archiver
-target/maven-status
-target/surefire-reports
-target/test-classes
-.settings
-.classpath
-.project
-env.sh
-
+src/main/main.iml
+src/test/test.iml
