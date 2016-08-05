@@ -3,13 +3,19 @@ Azuqua Java Library
 
 This library provides a Java interface for interacting with your Azuqua flos. The full source is available here in addition to the final jar file.
 
-Usage
-=====
+Dependencies
+============
 
 Add azuqua-java maven dependency to your project
 
-The first is by specifying your access key and access secret:
+Maven Dependency:
 
+```xml 
+<dependency>
+  <groupId>com.azuqua</groupId>
+  <artifactId>azuqua-java</artifactId>
+  <version>1.0.0</version>
+</dependency>
 ```
 
 Build
