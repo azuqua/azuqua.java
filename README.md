@@ -14,7 +14,7 @@ Maven Dependency:
 <dependency>
   <groupId>com.azuqua</groupId>
   <artifactId>azuqua-java</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 
