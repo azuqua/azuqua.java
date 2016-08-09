@@ -13,12 +13,12 @@ public class Org {
     private boolean trail_used;
     private boolean active;
     private boolean enabled;
-    private int isSelected;
+    private String role_type;
 
     public Org() {
     }
 
-    public Org(long id, String name, String display_name, String namespace, String trail_start, String trail_end, boolean trail_used, boolean active, boolean enabled, int isSelected) {
+    public Org(long id, String name, String display_name, String namespace, String trail_start, String trail_end, boolean trail_used, boolean active, boolean enabled, String role_type) {
         this.id = id;
         this.name = name;
         this.display_name = display_name;
@@ -28,7 +28,7 @@ public class Org {
         this.trail_used = trail_used;
         this.active = active;
         this.enabled = enabled;
-        this.isSelected = isSelected;
+        this.role_type = role_type;
     }
 
     public long getId() {
@@ -102,12 +102,12 @@ public class Org {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
-
-    public int getIsSelected() {
-        return isSelected;
+    
+    public String getRole_type() {
+        return role_type;
     }
 
-    public void setIsSelected(int isSelected) {
-        this.isSelected = isSelected;
+    public void setRole_type(String role_type) {
+        this.role_type = role_type;
     }
 }

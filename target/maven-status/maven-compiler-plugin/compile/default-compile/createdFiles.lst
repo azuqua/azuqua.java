@@ -5,7 +5,6 @@ com\azuqua\java\Azuqua$1$1.class
 com\azuqua\java\callbacks\AsyncRequest.class
 com\azuqua\java\Azuqua$1.class
 com\azuqua\java\callbacks\LoginRequest.class
-com\azuqua\java\models\Blob.class
 com\azuqua\java\Azuqua.class
 com\azuqua\java\Routes.class
 com\azuqua\java\Azuqua$2.class

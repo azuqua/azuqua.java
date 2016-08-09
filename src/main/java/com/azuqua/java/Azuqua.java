@@ -62,21 +62,14 @@ public class Azuqua {
             }
 
             @Override
-            public void onError(String error) {
-                AzuquaError azuquaError;
-                try {
-                    azuquaError = gson.fromJson(error, AzuquaError.class);
-                } catch (Exception e) {
-                    azuquaError = new AzuquaError(400, error);
-                }
-
+            public void onError(AzuquaError azuquaError) {
                 orgFLOsRequest.onError(azuquaError);
             }
         });
         requestHandler.execute();
     }
 
-    public void readFLO(String alias) {
+    public void readFLO(String alias, final AsyncRequest asyncRequest) {
         String path = Routes.FLO_READ.replace(":alias", alias);
         String timeStamp = getISOTime();
 
@@ -85,18 +78,12 @@ public class Azuqua {
         requestHandler = new RequestHandler(routes, path, Routes.METHOD_GET, "", timeStamp, signedData, accessKey, new AsyncRequest() {
             @Override
             public void onResponse(String response) {
-                System.out.println(response);
+                asyncRequest.onResponse(response);
             }
 
             @Override
-            public void onError(String error) {
-                AzuquaError azuquaError;
-                try {
-                    azuquaError = gson.fromJson(error, AzuquaError.class);
-                } catch (Exception e) {
-                    azuquaError = new AzuquaError(400, error);
-                }
-                System.out.println(azuquaError.getMessage());
+            public void onError(AzuquaError azuquaError) {
+                asyncRequest.onError(azuquaError);
             }
         });
 
@@ -109,7 +96,7 @@ public class Azuqua {
 
 
     public void runFLO(String alias, String data, final AsyncRequest asyncRequest) {
-        String path = Routes.FLO_INJECT.replace(":alias", alias);
+        String path = Routes.FLO_INVOKE.replace(":alias", alias);
         String timeStamp = getISOTime();
 
         String signedData = signDate(data, Routes.METHOD_POST, path, accessSecret, timeStamp);
@@ -121,14 +108,8 @@ public class Azuqua {
             }
 
             @Override
-            public void onError(String error) {
-                AzuquaError azuquaError;
-                try {
-                    azuquaError = gson.fromJson(error, AzuquaError.class);
-                } catch (Exception e) {
-                    azuquaError = new AzuquaError(400, error);
-                }
-                System.out.println(azuquaError.getMessage());
+            public void onError(AzuquaError error) {
+                asyncRequest.onError(error);
             }
         });
 
