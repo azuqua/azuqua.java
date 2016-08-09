@@ -15,8 +15,8 @@ import java.util.Map;
  */
 public class Test {
 
-    private static final String ACCESS_KEY = "";
-    private static final String ACCESS_SECRET = "";
+    static final String ACCESS_KEY = "";
+    static final String ACCESS_SECRET = "";
 
     private static Azuqua azuqua;
     private static List<FLO> floList;
@@ -27,6 +27,7 @@ public class Test {
 
 //        azuqua = new Azuqua(ACCESS_KEY, ACCESS_SECRET, "https", "api.azuqua.com", 443);
         getOrgFLOs();
+
     }
 
     private static void getOrgFLOs() {
@@ -34,13 +35,12 @@ public class Test {
             @Override
             public void onResponse(List<FLO> flos) {
                 floList = flos;
-                System.out.println(flos.size());
-//                floList.stream().filter(flo -> flo.getName().equals("Java HTTP")).forEach(Test::invokeFLO);
+                System.out.println("Number of FLOs: " + flos.size());
             }
 
             @Override
             public void onError(AzuquaError error) {
-                System.out.println("Error : " + error.getMessage());
+                System.out.println("Error : " + error.getErrorMessage());
             }
         });
     }
@@ -48,6 +48,8 @@ public class Test {
     private static void invokeFLO(FLO flo) {
         Gson gson = new Gson();
         Map<String, String> payload = new HashMap<String, String>();
+        
+
         azuqua.runFLO(flo.getAlias(), gson.toJson(payload), new AsyncRequest() {
             @Override
             public void onResponse(String response) {
@@ -55,8 +57,8 @@ public class Test {
             }
 
             @Override
-            public void onError(String error) {
-                System.out.println(error);
+            public void onError(AzuquaError error) {
+                System.out.println(error.getErrorMessage());
             }
         });
     }

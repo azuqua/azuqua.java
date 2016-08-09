@@ -13,8 +13,8 @@ public class User {
     private String first_name;
     private String middle_name;
     private String last_name;
-    private String access_secret;
     private String access_key;
+    private String access_secret;
     private List<Org> orgs;
 
     public User() {

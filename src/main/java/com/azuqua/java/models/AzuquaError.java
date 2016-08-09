@@ -5,14 +5,14 @@ package com.azuqua.java.models;
  */
 public class AzuquaError {
     private int statusCode;
-    private String message;
+    private String errorMessage;
 
     public AzuquaError() {
     }
 
-    public AzuquaError(int statusCode, String message) {
+    public AzuquaError(int statusCode, String errorMessage) {
         this.statusCode = statusCode;
-        this.message = message;
+        this.errorMessage = errorMessage;
     }
 
     public int getStatusCode() {
@@ -23,11 +23,11 @@ public class AzuquaError {
         this.statusCode = statusCode;
     }
 
-    public String getMessage() {
-        return message;
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }
