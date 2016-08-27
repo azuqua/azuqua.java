@@ -18,7 +18,7 @@ public class Routes {
     //public static String BASE = "https://api.azuqua.com";
 
     public static final String ORG_LOGIN = "/login";
-    public static final String ORG_FLOS = "/org/flos";
+    public static final String ORG_FLOS = "/org/flos?type=mobile";
 
     public static final String FLO_READ = "/flo/:alias/read";
     public static final String FLO_INJECT = "/flo/:alias/inject";

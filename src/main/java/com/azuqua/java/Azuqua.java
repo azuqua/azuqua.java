@@ -96,7 +96,7 @@ public class Azuqua {
 
 
     public void runFLO(String alias, String data, final AsyncRequest asyncRequest) {
-        String path = Routes.FLO_INVOKE.replace(":alias", alias);
+        String path = Routes.FLO_INJECT.replace(":alias", alias);
         String timeStamp = getISOTime();
 
         String signedData = signDate(data, Routes.METHOD_POST, path, accessSecret, timeStamp);
@@ -147,6 +147,11 @@ public class Azuqua {
         SecretKeySpec key = null;
         String meta = method.toLowerCase() + ":" + path + ":" + timeStamp;
         String dataToDigest = meta + data;
+
+        if (path.equalsIgnoreCase(Routes.ORG_FLOS)) {
+            dataToDigest += "{\"type\":\"mobile\"}";
+        }
+
         String hash = null;
         try {
             hMac = Mac.getInstance("HmacSHA256");
@@ -154,11 +159,7 @@ public class Azuqua {
             hMac.init(key);
             byte[] digest = hMac.doFinal(dataToDigest.getBytes("UTF-8"));
             hash = bytesToHex(digest).toLowerCase();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException | InvalidKeyException e) {
             e.printStackTrace();
         }
         return hash;
