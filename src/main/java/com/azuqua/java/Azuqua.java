@@ -109,7 +109,7 @@ public class Azuqua {
 
 
     public void runFLO(String alias, String data, final AsyncRequest asyncRequest) {
-        String path = Routes.FLO_INJECT.replace(":alias", alias);
+        String path = Routes.FLO_INVOKE.replace(":alias", alias);
         String timeStamp = getISOTime();
 
         String signedData = signDate(data, Routes.METHOD_POST, path, accessSecret, timeStamp);
