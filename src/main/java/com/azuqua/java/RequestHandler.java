@@ -1,11 +1,11 @@
 package com.azuqua.java;
 
 import com.azuqua.java.callbacks.AsyncRequest;
+import com.azuqua.java.models.AzuquaError;
+import com.google.gson.*;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.*;
 
 /**
  * Created by SASi on 14-Jul-16.
@@ -43,8 +43,11 @@ public class RequestHandler {
     }
 
     public void execute() {
+        int statusCode = 0;
+        Gson gson = new Gson();
         try {
             URL url = new URL(routes.getProtocol(), routes.getHost(), routes.getPort(), path);
+
 
             urlConnection = url.openConnection();
 
@@ -69,8 +72,8 @@ public class RequestHandler {
                 outputStream.close();
             }
 
-            int statusCode = ((HttpURLConnection) urlConnection).getResponseCode();
-            System.out.println("Status Code " + statusCode);
+            statusCode = ((HttpURLConnection) urlConnection).getResponseCode();
+//            System.out.println("Status Code " + statusCode);
 
             InputStream inputStream;
 
@@ -79,12 +82,27 @@ public class RequestHandler {
                 asyncRequest.onResponse(parseMessage(inputStream));
             } else {
                 inputStream = ((HttpURLConnection) urlConnection).getErrorStream();
-                asyncRequest.onError(parseMessage(inputStream));
+                String _error = parseMessage(inputStream);
+                JsonElement jsonElement = new JsonParser().parse(_error);
+
+                if (jsonElement.isJsonObject()) {
+                    JsonObject jsonObject = jsonElement.getAsJsonObject();
+                    JsonElement str = jsonObject.get("error");
+                    asyncRequest.onError(new AzuquaError(statusCode, str.getAsString()));
+                } else {
+                    asyncRequest.onError(new AzuquaError(statusCode, _error));
+                }
+
             }
 
+        } catch (SocketTimeoutException e) {
+            asyncRequest.onError(new AzuquaError(statusCode, "Timeout error"));
+        } catch (UnknownHostException e) {
+            asyncRequest.onError(new AzuquaError(statusCode, "Invalid host address."));
+        } catch (JsonSyntaxException e) {
+            asyncRequest.onError(new AzuquaError(statusCode, "Invalid path or not a valid request."));
         } catch (IOException e) {
-//            e.printStackTrace();
-            asyncRequest.onError(e.toString());
+            asyncRequest.onError(new AzuquaError(statusCode, e.toString()));
         } finally {
             ((HttpURLConnection) urlConnection).disconnect();
         }
