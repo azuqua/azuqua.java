@@ -25,33 +25,38 @@ import java.util.TimeZone;
 /**
  * Created by SASi on 14-Jul-16.
  */
-public class Azuqua {
+class Azuqua {
 
     final private static char[] hexArray = "0123456789ABCDEF".toCharArray();
     private Gson gson = new Gson();
     private RequestHandler requestHandler;
     private String accessKey;
     private String accessSecret;
-    private Routes routes = new Routes();
 
-    public Azuqua(String accessKey, String accessSecret) {
+    Azuqua(String accessKey, String accessSecret) {
         this.accessKey = accessKey;
         this.accessSecret = accessSecret;
     }
 
-    public Azuqua(String accessKey, String accessSecret, String protocol, String host, int port) {
+    Azuqua(String accessKey, String accessSecret, String protocol, String host, int port) {
         this.accessKey = accessKey;
         this.accessSecret = accessSecret;
-        routes.setProtocol(protocol);
-        routes.setHost(host);
-        routes.setPort(port);
+
+        Routes.PROTOCOL = protocol;
+        Routes.HOST = host;
+        Routes.PORT = port;
+//        new Routes(protocol, host, port);
     }
 
-    public void getFLOs(final OrgFLOsRequest orgFLOsRequest) {
+    void getFLOs(long orgId, final OrgFLOsRequest orgFLOsRequest) {
+
         String timeStamp = getISOTime();
-        String signedData = signDate("", Routes.METHOD_GET, Routes.ORG_FLOS, accessSecret, timeStamp);
+        String ORG_FLOS = Routes.ORG_FLOS.replace(":org_id", "" + orgId);
+        String data = "{\"org_id\":\"" + orgId + "\",\"channel_key\":\"predixedge\"}";
 
-        requestHandler = new RequestHandler(routes, Routes.ORG_FLOS, Routes.METHOD_GET, "", timeStamp, signedData,
+        String signedData = signDate(data, Routes.METHOD_GET, ORG_FLOS, accessSecret, timeStamp);
+
+        requestHandler = new RequestHandler(ORG_FLOS, Routes.METHOD_GET, "", timeStamp, signedData,
                 accessKey, new AsyncRequest() {
             @Override
             public void onResponse(String response) {
@@ -69,13 +74,13 @@ public class Azuqua {
         requestHandler.execute();
     }
 
-    public void readFLO(String alias, final AsyncRequest asyncRequest) {
-        String path = Routes.FLO_READ.replace(":alias", alias);
+    void getFLOInputs(String alias, final AsyncRequest asyncRequest) {
+        String path = Routes.FLO_INPUTS.replace(":alias", alias);
         String timeStamp = getISOTime();
 
         String signedData = signDate("", Routes.METHOD_GET, path, accessSecret, timeStamp);
 
-        requestHandler = new RequestHandler(routes, path, Routes.METHOD_GET, "", timeStamp, signedData, accessKey, new AsyncRequest() {
+        requestHandler = new RequestHandler(path, Routes.METHOD_GET, "", timeStamp, signedData, accessKey, new AsyncRequest() {
             @Override
             public void onResponse(String response) {
                 asyncRequest.onResponse(response);
@@ -90,18 +95,13 @@ public class Azuqua {
         requestHandler.execute();
     }
 
-    public void invokeFLO(String alias, String data, AsyncRequest asyncRequest) {
-        runFLO(alias, data, asyncRequest);
-    }
-
-
-    public void runFLO(String alias, String data, final AsyncRequest asyncRequest) {
-        String path = Routes.FLO_INJECT.replace(":alias", alias);
+    void invokeFLO(String alias, String data, AsyncRequest asyncRequest) {
+        String path = Routes.FLO_INVOKE.replace(":alias", alias);
         String timeStamp = getISOTime();
 
         String signedData = signDate(data, Routes.METHOD_POST, path, accessSecret, timeStamp);
 
-        requestHandler = new RequestHandler(routes, path, Routes.METHOD_POST, data, timeStamp, signedData, accessKey, new AsyncRequest() {
+        requestHandler = new RequestHandler(path, Routes.METHOD_POST, data, timeStamp, signedData, accessKey, new AsyncRequest() {
             @Override
             public void onResponse(String response) {
                 asyncRequest.onResponse(response);
@@ -147,11 +147,6 @@ public class Azuqua {
         SecretKeySpec key = null;
         String meta = method.toLowerCase() + ":" + path + ":" + timeStamp;
         String dataToDigest = meta + data;
-
-        if (path.equalsIgnoreCase(Routes.ORG_FLOS)) {
-            dataToDigest += "{\"type\":\"mobile\"}";
-        }
-
         String hash = null;
         try {
             hMac = Mac.getInstance("HmacSHA256");

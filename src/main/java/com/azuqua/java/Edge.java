@@ -1,29 +1,22 @@
 package com.azuqua.java;
 
-import azuqua.flo.builder.Flo;
-import azuqua.flo.builder.FloBuilder;
-import azuqua.flo.builder.Method;
-import azuqua.flo.builder.exceptions.BadPublisherRequestException;
-import azuqua.flo.builder.exceptions.FloNotFoundException;
-import azuqua.flo.builder.exceptions.NamespaceNotFoundException;
-import azuqua.flo.builder.exceptions.SignDataException;
-import azuqua.flo.builder.models.Input;
-import azuqua.flo.builder.models.Output;
 import com.azuqua.java.callbacks.AsyncRequest;
 import com.azuqua.java.callbacks.OrgFLOsRequest;
 import com.azuqua.java.models.AzuquaError;
+import com.azuqua.java.models.Data;
 import com.azuqua.java.models.FLO;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.concurrent.TimedSemaphore;
+import org.zeromq.ZMQ;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -31,13 +24,15 @@ import java.util.stream.Collectors;
  */
 public class Edge {
 
-    static Scanner scanner;
+    private static Scanner scanner;
     private static String accessKey, accessSecret;
     private static Azuqua azuqua;
-    private static FloBuilder floBuilder;
     private static List<FLO> floList = new ArrayList<>();
-    private static String apiHost = "", apiProtocol = "", publisherHost = "", publisherProtocol = "";
-    private static int apiPort, publisherPort;
+    private static String apiHost = "", apiProtocol = "";
+    private static int apiPort;
+    private static long orgId;
+    private static List<Double> nQueue = new ArrayList<>();
+    private static FLO activeFLO;
 
     public static void main(String[] args) {
 
@@ -50,19 +45,13 @@ public class Edge {
 
             accessKey = accountObject.get("access_key").getAsString();
             accessSecret = accountObject.get("access_secret").getAsString();
+            orgId = accountObject.get("org_id").getAsLong();
 
             if (configObject.has("api")) {
                 JsonObject apiObject = configObject.getAsJsonObject("api");
                 apiHost = apiObject.get("host").getAsString();
                 apiProtocol = apiObject.get("protocol").getAsString();
                 apiPort = apiObject.get("port").getAsInt();
-            }
-
-            if (configObject.has("publisher")) {
-                JsonObject publisherObject = configObject.getAsJsonObject("publisher");
-                publisherHost = publisherObject.get("host").getAsString();
-                publisherProtocol = publisherObject.get("protocol").getAsString();
-                publisherPort = publisherObject.get("port").getAsInt();
             }
 
         } catch (FileNotFoundException e) {
@@ -84,23 +73,18 @@ public class Edge {
 
         System.out.println("\n\nGetting FLO list. Please wait.....");
 
-        azuqua.getFLOs(new OrgFLOsRequest() {
+        azuqua.getFLOs(orgId, new OrgFLOsRequest() {
             @Override
             public void onResponse(List<FLO> flos) {
                 System.out.println("Done.\n\n");
 
-                if (flos.size() == 0) {
+                if (flos.isEmpty()) {
                     handleEmptyFLOList();
                 } else {
                     floList.addAll(flos.stream().filter(FLO::isActive).collect(Collectors.toList()));
-                    //generateFLOMenu();
-                    try {
-                        runFLO(floList.get(0));
-                    } catch (BadPublisherRequestException e) {
-                        e.printStackTrace();
-                    }
+                    activeFLO = floList.get(0);
+                    getFLOInputs();
                 }
-
             }
 
             @Override
@@ -109,7 +93,6 @@ public class Edge {
                 System.out.println("\nError: " + error.getErrorMessage() + "\n\n");
             }
         });
-
     }
 
     private static void handleEmptyFLOList() {
@@ -155,143 +138,65 @@ public class Edge {
                 System.out.println("\nPlease enter a valid option");
                 System.out.println("Value must be in between 0 to " + floList.size());
             } else {
-                try {
-                    runFLO(floList.get(option - 1));
-                } catch (BadPublisherRequestException e) {
-                    e.printStackTrace();
-                }
+                activeFLO = floList.get(option - 1);
+                getFLOInputs();
                 break;
             }
         }
     }
 
-    private static void runFLO(FLO flo) throws BadPublisherRequestException {
+    private static void runFLO(String frequency, String baseValue, String units, String filter) {
 
-        int floID = flo.getId();
 
-        String filter = null;
-        long freequency = 0;
-        double baseValue = 0;
-        String units = "C";
+        Double finalBaseValue = Double.parseDouble(baseValue);
+        Long finalFrequency = Long.parseLong(frequency);
 
-        try {
-            Flo _flo = floBuilder.getFloInstance("" + floID);
+        ZMQ.Context zmqContext = ZMQ.context(1);
+        System.out.println("\n\nCollecting updates from weather server");
+        ZMQ.Socket subscriberSocket = zmqContext.socket(2);
+        subscriberSocket.connect("tcp://localhost:5555");
 
-            List<Method> methodList = _flo.methods();
-            Method method = methodList.get(0);
+        assert (filter != null);
+        subscriberSocket.subscribe("azuqua".getBytes());
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(new AzuquaEdge(), 0, finalFrequency, TimeUnit.MILLISECONDS);
 
-            Map<String, Input> inputs = method.inputs();
-            Set<String> inputKeys = inputs.keySet();
-
-            for (String key : inputKeys) {
-
-                String value = StringUtils.substringsBetween(inputs.get(key).getDefaultValue().toString(), "\"", "\"")[0];
-
-                switch (inputs.get(key).getKey().toLowerCase()) {
-                    case "filter":
-                        filter = value;
-                        break;
-                    case "basevalue":
-                        baseValue = Double.parseDouble(value);
-                        break;
-                    case "frequency":
-                        freequency = Long.parseLong(value);
-                        break;
-                    case "units":
-                        units = value;
-                        break;
+        do {
+            String string = subscriberSocket.recvStr(0).trim();
+            StringTokenizer sscanf = new StringTokenizer(string, " ");
+            sscanf.nextToken();
+            double temperature = Integer.valueOf(sscanf.nextToken());
+            if (units.equalsIgnoreCase("F")) {
+                temperature = (temperature * 9 / 5.0) + 32;
+            }
+            switch (filter.toLowerCase()) {
+                case "=": {
+                    if (temperature != finalBaseValue) break;
+                    nQueue.add(temperature);
+                    break;
+                }
+                case ">": {
+                    if (temperature <= finalBaseValue) break;
+                    nQueue.add(temperature);
+                    break;
+                }
+                case "<": {
+                    if (temperature >= finalBaseValue) break;
+                    nQueue.add(temperature);
+                    break;
+                }
+                case "<=": {
+                    if (temperature > finalBaseValue) break;
+                    nQueue.add(temperature);
+                    break;
+                }
+                case ">=": {
+                    if (temperature < finalBaseValue) break;
+                    nQueue.add(temperature);
                 }
             }
+        } while (true);
 
-//            Map<String, Output> outputs = method.outputs();
-//            Set<String> outputKeys = outputs.keySet();
-//
-//            for (String key : outputKeys) {
-//                Output output = outputs.get(key);
-//                if (!output.getGroup().equalsIgnoreCase("context"))
-//                    System.out.println("\t" + output.getKey() + " \t " + output.getGroup());
-//            }
-
-        } catch (SignDataException | IOException | FloNotFoundException | NamespaceNotFoundException e) {
-            e.printStackTrace();
-        }
-
-
-        final String finalUnits = units;
-        final String finalFilter = filter;
-        final double finalBaseValue = baseValue;
-
-        Runnable runnable = () -> {
-
-            int min = 0;
-            int max = 50;
-
-            Random random = new Random();
-            double randomNum = random.nextInt((max - min) + 1) + min;
-
-            if (finalUnits.equalsIgnoreCase("F")) {
-                randomNum = randomNum * 1.8 + 32;
-            }
-
-//            System.out.println("Generated Value \t\t Base Value");
-//            System.out.println(randomNum + "\t\t\t\t\t\t\t" + finalBaseValue);
-
-            assert finalFilter != null;
-            switch (finalFilter.toLowerCase()) {
-                case "=":
-                    if (randomNum != finalBaseValue) {
-                        return;
-                    }
-                    break;
-                case ">":
-                    if (randomNum < finalBaseValue) {
-                        return;
-                    }
-                    break;
-                case "<":
-                    if (randomNum < finalBaseValue) {
-                        return;
-                    }
-                    break;
-                case "<=":
-                    if (randomNum >= finalBaseValue) {
-                        return;
-                    }
-                    break;
-                case ">=":
-                    if (randomNum <= finalBaseValue) {
-                        return;
-                    }
-                    break;
-            }
-
-
-            Map<String, String> shapes = new HashMap<>();
-            shapes.put("Temperature", "");
-
-            Map<String, Map> shapesGroup = new HashMap<>();
-            shapesGroup.put("Temperature", shapes);
-
-            azuqua.runFLO(flo.getAlias(), new Gson().toJson(shapesGroup), new AsyncRequest() {
-                @Override
-                public void onResponse(String response) {
-                    System.out.println("FLO ran Successfully. " + response + "\n\n");
-                }
-
-                @Override
-                public void onError(AzuquaError error) {
-                    System.out.println("FLO failed to run. " + error.getErrorMessage() + "\n\n");
-                }
-            });
-        };
-
-        final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(runnable, 0, freequency, TimeUnit.MILLISECONDS);
-
-//        final ScheduledFuture<?> executionHandle = scheduler.scheduleAtFixedRate(runnable, 10, freequency, TimeUnit.MILLISECONDS);
-//        scheduler.schedule((Runnable) () -> executionHandle.cancel(true), 6 * freequency, TimeUnit.MILLISECONDS);
-
-        System.out.println("\n\n" + flo.getName() + " started Monitoring Temperature \n");
     }
 
     private static void init() {
@@ -305,17 +210,85 @@ public class Edge {
             azuqua = new Azuqua(accessKey, accessSecret, apiProtocol, apiHost, apiPort);
         else
             azuqua = new Azuqua(accessKey, accessSecret);
-
-        if (!publisherHost.isEmpty() && !publisherProtocol.isEmpty())
-            floBuilder = new FloBuilder(accessKey, accessSecret, publisherHost, publisherProtocol, publisherPort);
-        else
-            floBuilder = new FloBuilder(accessKey, accessSecret);
     }
 
-    private static void readConfig() {
-        System.out.println("\nEnter Access Key : ");
-        accessKey = scanner.nextLine();
-        System.out.println("\nEnter Access Secret : ");
-        accessSecret = scanner.nextLine();
+    private static void getFLOInputs() {
+
+        azuqua.getFLOInputs(activeFLO.getAlias(), new AsyncRequest() {
+            @Override
+            public void onResponse(String response) {
+
+                String frequency = null;
+                String baseValue = null;
+                String units = null;
+                String filter = null;
+
+
+                JsonParser jsonParser = new JsonParser();
+                JsonObject jsonObject = jsonParser.parse(response).getAsJsonObject();
+                JsonArray jsonArray = jsonObject.get("data").getAsJsonArray();
+
+
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JsonObject jsonObjectData = jsonArray.get(i).getAsJsonObject();
+
+                    if (jsonObjectData.get("defaultValue").isJsonObject())
+                        continue;
+
+                    Data data = new Gson().fromJson(jsonObjectData, Data.class);
+
+                    switch (data.getKey().toLowerCase()) {
+                        case "frequency":
+                            frequency = data.getDefaultValue();
+                            break;
+                        case "basevalue":
+                            baseValue = data.getDefaultValue();
+                            break;
+                        case "units":
+                            units = data.getDefaultValue();
+                            break;
+                        case "filter":
+                            filter = data.getDefaultValue();
+                            break;
+                    }
+                }
+                runFLO(frequency, baseValue, units, filter);
+            }
+
+            @Override
+            public void onError(AzuquaError error) {
+                System.out.println(error.getErrorMessage());
+            }
+        });
+    }
+
+    private static class AzuquaEdge implements Runnable {
+
+        @Override
+        public void run() {
+            System.out.println("Processed Data Queue Size : " + nQueue.size());
+            int i = 0;
+            while (i < nQueue.size()) {
+                final int position = i++;
+                Double temperature = (Double) nQueue.get(position);
+                HashMap<String, String> shapes = new HashMap<String, String>();
+                shapes.put("Temperature", "" + temperature);
+                HashMap<String, HashMap<String, String>> shapesGroup = new HashMap<String, HashMap<String, String>>();
+                shapesGroup.put("Data", shapes);
+                azuqua.invokeFLO(activeFLO.getAlias(), new Gson().toJson(shapesGroup), new AsyncRequest() {
+
+                    @Override
+                    public void onResponse(String response) {
+                        System.out.println("FLO ran Successfully. " + response + "\n\n");
+                        nQueue.remove(position);
+                    }
+
+                    @Override
+                    public void onError(AzuquaError error) {
+                        System.out.println("FLO failed to run. " + error.getErrorMessage() + "\n\n");
+                    }
+                });
+            }
+        }
     }
 }
