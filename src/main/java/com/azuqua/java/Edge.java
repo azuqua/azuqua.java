@@ -151,6 +151,11 @@ public class Edge {
         Double finalBaseValue = Double.parseDouble(baseValue);
         Long finalFrequency = Long.parseLong(frequency);
 
+        if (finalFrequency <= 0) {
+            System.out.println("Frequency Value must be greater than 0 milliseconds.");
+            return;
+        }
+
         ZMQ.Context zmqContext = ZMQ.context(1);
         System.out.println("\n\nCollecting updates from weather server");
         ZMQ.Socket subscriberSocket = zmqContext.socket(2);
@@ -263,6 +268,7 @@ public class Edge {
     }
 
     private static class AzuquaEdge implements Runnable {
+
 
         @Override
         public void run() {
