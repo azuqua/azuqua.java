@@ -31,7 +31,7 @@ public class Test {
     }
 
     private static void getOrgFLOs() {
-        azuqua.getFLOs(new OrgFLOsRequest() {
+        azuqua.getFLOs(44, new OrgFLOsRequest() {
             @Override
             public void onResponse(List<FLO> flos) {
                 floList = flos;
@@ -50,7 +50,7 @@ public class Test {
         Map<String, String> payload = new HashMap<String, String>();
         
 
-        azuqua.runFLO(flo.getAlias(), gson.toJson(payload), new AsyncRequest() {
+        azuqua.invokeFLO(flo.getAlias(), gson.toJson(payload), new AsyncRequest() {
             @Override
             public void onResponse(String response) {
                 System.out.println(response);

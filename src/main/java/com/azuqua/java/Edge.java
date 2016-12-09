@@ -38,7 +38,7 @@ public class Edge {
 
         JsonParser parser = new JsonParser();
         try {
-            JsonObject jsonObject = (JsonObject) parser.parse(new FileReader("azuqua.config"));
+            JsonObject jsonObject = (JsonObject) sparser.parse(new FileReader("azuqua.config"));
 
             JsonObject configObject = jsonObject.getAsJsonObject("config");
             JsonObject accountObject = configObject.getAsJsonObject("account");
