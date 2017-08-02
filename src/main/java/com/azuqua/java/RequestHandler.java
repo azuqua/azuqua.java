@@ -67,7 +67,8 @@ public class RequestHandler {
             if (this.method.equals("POST")) {
                 urlConnection.setDoOutput(true);
                 DataOutputStream outputStream = new DataOutputStream(urlConnection.getOutputStream());
-                outputStream.writeBytes(payload);
+                byte[] payloadBytes = payload.getBytes("UTF-8");
+                outputStream.write(payloadBytes, 0, payloadBytes.length);
                 outputStream.flush();
                 outputStream.close();
             }
