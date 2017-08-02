@@ -64,16 +64,16 @@ public class RequestHandler {
                 urlConnection.setRequestProperty("x-api-accessKey", this.accessKey);
             }
 
-            if (this.method.equals("POST")) {
+            if (this.method.equals("POST") || this.method.equals("PUT")) {
                 urlConnection.setDoOutput(true);
                 DataOutputStream outputStream = new DataOutputStream(urlConnection.getOutputStream());
-                outputStream.writeBytes(payload);
+                byte[] payloadBytes = payload.getBytes("UTF-8");
+                outputStream.write(payloadBytes, 0, payloadBytes.length);
                 outputStream.flush();
                 outputStream.close();
             }
 
             statusCode = ((HttpURLConnection) urlConnection).getResponseCode();
-//            System.out.println("Status Code " + statusCode);
 
             InputStream inputStream;
 
