@@ -40,8 +40,7 @@ public class Azuqua {
     }
 
 
-    public void readFolder(java.lang.Integer folder_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void readFolder(java.lang.Integer folder_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/folder/:folder_id";
       String method = "GET";
@@ -93,7 +92,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readAllFolders(java.lang.String data, final AsyncRequest asyncRequest) {
+    public void readAllFolders(final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/folders";
       String method = "GET";
@@ -109,8 +108,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readFolderFlos(java.lang.Integer folder_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void readFolderFlos(java.lang.Integer folder_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/folder/:folder_id/flos";
       String method = "GET";
@@ -127,8 +125,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void deleteFolder(java.lang.Integer folder_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void deleteFolder(java.lang.Integer folder_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/folder/:folder_id";
       String method = "DELETE";
@@ -163,7 +160,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readFolderUsers(java.lang.Integer folder_id, java.lang.String data,
+    public void readFolderUsers(java.lang.Integer folder_id,
         final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/folder/:folder_id/users";
@@ -182,8 +179,7 @@ public class Azuqua {
     }
 
     public void readConnectorVersion(java.lang.String connector_name,
-        java.lang.String connector_version, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+        java.lang.String connector_version, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/connectors/:connector_name/:connector_version";
       String method = "GET";
@@ -219,7 +215,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readOrg(java.lang.String data, final AsyncRequest asyncRequest) {
+    public void readOrg(final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/org";
       String method = "GET";
@@ -235,7 +231,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void removeUserFromOrg(java.lang.Integer user_id, java.lang.String data,
+    public void removeUserFromOrg(java.lang.Integer user_id,
         final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/org/remove/user/:user_id";
@@ -253,7 +249,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readOrgConnectors(java.lang.String data, final AsyncRequest asyncRequest) {
+    public void readOrgConnectors(final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/org/connectors";
       String method = "GET";
@@ -269,7 +265,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readOrgFlos(java.lang.String data, final AsyncRequest asyncRequest) {
+    public void readOrgFlos(final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/org/flos";
       String method = "GET";
@@ -301,8 +297,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readFloAccounts(java.lang.Integer flo_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void readFloAccounts(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/flo/:flo_id/accounts";
       String method = "GET";
@@ -319,8 +314,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void enableFlo(java.lang.Integer flo_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void enableFlo(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/flo/:flo_id/enable";
       String method = "PUT";
@@ -373,8 +367,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void deleteFlo(java.lang.Integer flo_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void deleteFlo(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/flo/:flo_id";
       String method = "DELETE";
@@ -391,8 +384,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readFloInputs(java.lang.Integer flo_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void readFloInputs(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/flo/:flo_id/inputs";
       String method = "GET";
@@ -410,7 +402,7 @@ public class Azuqua {
     }
 
     public void moveFloToFolder(java.lang.Integer flo_id, java.lang.Integer folder_id,
-        java.lang.String data, final AsyncRequest asyncRequest) {
+        final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/flo/:flo_id/move/folder/:folder_id";
       String method = "PUT";
@@ -465,8 +457,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void disableFlo(java.lang.Integer flo_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void disableFlo(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/flo/:flo_id/disable";
       String method = "PUT";
@@ -483,8 +474,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readFlo(java.lang.Integer flo_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void readFlo(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/flo/:flo_id";
       String method = "GET";
@@ -501,7 +491,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readUserOrgs(java.lang.String data, final AsyncRequest asyncRequest) {
+    public void readUserOrgs(final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/user/orgs";
       String method = "GET";
@@ -517,8 +507,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void deleteAccount(java.lang.Integer account_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void deleteAccount(java.lang.Integer account_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/account/:account_id";
       String method = "DELETE";
@@ -554,8 +543,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readAccount(java.lang.Integer account_id, java.lang.String data,
-        final AsyncRequest asyncRequest) {
+    public void readAccount(java.lang.Integer account_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/account/:account_id";
       String method = "GET";
@@ -572,7 +560,7 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readAllAccounts(java.lang.String data, final AsyncRequest asyncRequest) {
+    public void readAllAccounts(final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/accounts";
       String method = "GET";
@@ -612,7 +600,6 @@ public class Azuqua {
         SecretKeySpec key = null;
         String meta = verb.toLowerCase() + ":" + path + ":" + timeStamp;
         String dataToDigest = meta + data;
-        System.out.println(dataToDigest);
         String hash = null;
         try {
             hMac = Mac.getInstance("HmacSHA256");
@@ -620,7 +607,6 @@ public class Azuqua {
             hMac.init(key);
             byte[] digest = hMac.doFinal(dataToDigest.getBytes("UTF-8"));
             hash = bytesToHex(digest).toLowerCase();
-            System.out.println(hash);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
