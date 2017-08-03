@@ -10,18 +10,9 @@ Requirements
 
 Install
 =======
+Jar files can be found at https://github.com/azuqua/azuqua.java/tree/apiV2
 
-Add azuqua-java maven dependency to your project
-
-Maven Dependency:
-
-```xml 
-<dependency>
-  <groupId>com.azuqua</groupId>
-  <artifactId>azuqua-java</artifactId>
-  <version>1.0.2</version>
-</dependency>
-```
+Azuqua.java maven will eventually be updated with these changes under a version 2.0 tag
 
 Usage
 =====
