@@ -13,6 +13,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.HashMap;
 
 /**
  * Created by SASi on 14-Jul-16.
@@ -40,11 +41,67 @@ public class Azuqua {
     }
 
 
+    public static class InvokeData {
+        private String method;
+        private String querystring;
+        private String body;
+        private HashMap<String, String> headers;
+
+        public InvokeData(String method, String queryString, String body, HashMap<String, String> headers) {
+            this.method = method;
+            this.querystring = queryString;
+            this.body = body;
+            this.headers = headers;
+        }
+    }
+
+    public void invoke(String alias, InvokeData data, final AsyncRequest asyncRequest) {
+        String endpoint = "/v2/flo/" + alias + "/invoke";
+        String timeStamp = getISOTime();
+        if (data.querystring != null && data.querystring.length() > 0) {
+            endpoint = endpoint + '?' + data.querystring;
+        }
+        if (data.method.equalsIgnoreCase("get") || data.method.equalsIgnoreCase("delete")) {
+            data.body = "";
+        }
+        String signedData = signData(endpoint, data.method.toUpperCase(), data.body, accessSecret, timeStamp);
+        requestHandler = new RequestHandler(routes, endpoint, data.method.toUpperCase(), data.body, timeStamp, signedData, accessKey, data.headers, new AsyncRequest() {
+            public void onResponse(String response) {
+                asyncRequest.onResponse(response);
+            }
+            public void onError(AzuquaError azuquaError) {
+                asyncRequest.onError(azuquaError);
+            }
+        });
+        requestHandler.execute();
+    }
+
+
+    public void exportFolderToFlopack(java.lang.Integer folder_id,
+        final AsyncRequest asyncRequest) {
+      String timeStamp = getISOTime();
+      String path = "/v2/folder/:folder_id/flopack/export";
+      String method = "POST";
+      path = path.replace(":folder_id", "" + folder_id);
+      String data = "";
+      String signedData = signData(path, method, data, accessSecret, timeStamp);
+      requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
+         public void onResponse(String response) {
+              asyncRequest.onResponse(response);
+         }
+         public void onError(AzuquaError azuquaError) {
+             asyncRequest.onError(azuquaError);
+         }
+      });
+      requestHandler.execute();
+    }
+
     public void readFolder(java.lang.Integer folder_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/folder/:folder_id";
       String method = "GET";
       path = path.replace(":folder_id", "" + folder_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -96,6 +153,7 @@ public class Azuqua {
       String timeStamp = getISOTime();
       String path = "/v2/folders";
       String method = "GET";
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -113,6 +171,7 @@ public class Azuqua {
       String path = "/v2/folder/:folder_id/flos";
       String method = "GET";
       path = path.replace(":folder_id", "" + folder_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -130,6 +189,7 @@ public class Azuqua {
       String path = "/v2/folder/:folder_id";
       String method = "DELETE";
       path = path.replace(":folder_id", "" + folder_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -166,6 +226,7 @@ public class Azuqua {
       String path = "/v2/folder/:folder_id/users";
       String method = "GET";
       path = path.replace(":folder_id", "" + folder_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -185,6 +246,59 @@ public class Azuqua {
       String method = "GET";
       path = path.replace(":connector_name", connector_name);
       path = path.replace(":connector_version", connector_version);
+      String data = "";
+      String signedData = signData(path, method, data, accessSecret, timeStamp);
+      requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
+         public void onResponse(String response) {
+              asyncRequest.onResponse(response);
+         }
+         public void onError(AzuquaError azuquaError) {
+             asyncRequest.onError(azuquaError);
+         }
+      });
+      requestHandler.execute();
+    }
+
+    public void readConnectorAuthScheme(java.lang.String connector_name,
+        java.lang.String connector_version, final AsyncRequest asyncRequest) {
+      String timeStamp = getISOTime();
+      String path = "/v2/connectors/:connector_name/:connector_version/authSchema";
+      String method = "GET";
+      path = path.replace(":connector_name", connector_name);
+      path = path.replace(":connector_version", connector_version);
+      String data = "";
+      String signedData = signData(path, method, data, accessSecret, timeStamp);
+      requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
+         public void onResponse(String response) {
+              asyncRequest.onResponse(response);
+         }
+         public void onError(AzuquaError azuquaError) {
+             asyncRequest.onError(azuquaError);
+         }
+      });
+      requestHandler.execute();
+    }
+
+    public void importFlopack(java.lang.String data, final AsyncRequest asyncRequest) {
+      String timeStamp = getISOTime();
+      String path = "/v2/flopack/import";
+      String method = "POST";
+      String signedData = signData(path, method, data, accessSecret, timeStamp);
+      requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
+         public void onResponse(String response) {
+              asyncRequest.onResponse(response);
+         }
+         public void onError(AzuquaError azuquaError) {
+             asyncRequest.onError(azuquaError);
+         }
+      });
+      requestHandler.execute();
+    }
+
+    public void exportFlopack(java.lang.String data, final AsyncRequest asyncRequest) {
+      String timeStamp = getISOTime();
+      String path = "/v2/flopack/export";
+      String method = "POST";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -219,24 +333,7 @@ public class Azuqua {
       String timeStamp = getISOTime();
       String path = "/v2/org";
       String method = "GET";
-      String signedData = signData(path, method, data, accessSecret, timeStamp);
-      requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
-         public void onResponse(String response) {
-              asyncRequest.onResponse(response);
-         }
-         public void onError(AzuquaError azuquaError) {
-             asyncRequest.onError(azuquaError);
-         }
-      });
-      requestHandler.execute();
-    }
-
-    public void removeUserFromOrg(java.lang.Integer user_id,
-        final AsyncRequest asyncRequest) {
-      String timeStamp = getISOTime();
-      String path = "/v2/org/remove/user/:user_id";
-      String method = "POST";
-      path = path.replace(":user_id", "" + user_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -253,6 +350,7 @@ public class Azuqua {
       String timeStamp = getISOTime();
       String path = "/v2/org/connectors";
       String method = "GET";
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -269,6 +367,7 @@ public class Azuqua {
       String timeStamp = getISOTime();
       String path = "/v2/org/flos";
       String method = "GET";
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -297,11 +396,12 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void readFloAccounts(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
+    public void enableFlo(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
-      String path = "/v2/flo/:flo_id/accounts";
-      String method = "GET";
+      String path = "/v2/flo/:flo_id/enable";
+      String method = "PUT";
       path = path.replace(":flo_id", "" + flo_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -314,11 +414,12 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void enableFlo(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
+    public void readFloAccounts(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
-      String path = "/v2/flo/:flo_id/enable";
-      String method = "PUT";
+      String path = "/v2/flo/:flo_id/accounts";
+      String method = "GET";
       path = path.replace(":flo_id", "" + flo_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -372,6 +473,7 @@ public class Azuqua {
       String path = "/v2/flo/:flo_id";
       String method = "DELETE";
       path = path.replace(":flo_id", "" + flo_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -389,6 +491,7 @@ public class Azuqua {
       String path = "/v2/flo/:flo_id/inputs";
       String method = "GET";
       path = path.replace(":flo_id", "" + flo_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -408,6 +511,7 @@ public class Azuqua {
       String method = "PUT";
       path = path.replace(":flo_id", "" + flo_id);
       path = path.replace(":folder_id", "" + folder_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -439,12 +543,13 @@ public class Azuqua {
       requestHandler.execute();
     }
 
-    public void modifyFlo(java.lang.Integer flo_id, java.lang.String data,
+    public void readFloOpenApiSpec(java.lang.String flo_alias,
         final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
-      String path = "/v2/flo/:flo_id/modify";
-      String method = "PUT";
-      path = path.replace(":flo_id", "" + flo_id);
+      String path = "/v2/flo/:flo_alias/openAPISpec";
+      String method = "GET";
+      path = path.replace(":flo_alias", flo_alias);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -460,6 +565,25 @@ public class Azuqua {
     public void disableFlo(java.lang.Integer flo_id, final AsyncRequest asyncRequest) {
       String timeStamp = getISOTime();
       String path = "/v2/flo/:flo_id/disable";
+      String method = "PUT";
+      path = path.replace(":flo_id", "" + flo_id);
+      String data = "";
+      String signedData = signData(path, method, data, accessSecret, timeStamp);
+      requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
+         public void onResponse(String response) {
+              asyncRequest.onResponse(response);
+         }
+         public void onError(AzuquaError azuquaError) {
+             asyncRequest.onError(azuquaError);
+         }
+      });
+      requestHandler.execute();
+    }
+
+    public void modifyFlo(java.lang.Integer flo_id, java.lang.String data,
+        final AsyncRequest asyncRequest) {
+      String timeStamp = getISOTime();
+      String path = "/v2/flo/:flo_id/modify";
       String method = "PUT";
       path = path.replace(":flo_id", "" + flo_id);
       String signedData = signData(path, method, data, accessSecret, timeStamp);
@@ -479,6 +603,7 @@ public class Azuqua {
       String path = "/v2/flo/:flo_id";
       String method = "GET";
       path = path.replace(":flo_id", "" + flo_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -495,6 +620,7 @@ public class Azuqua {
       String timeStamp = getISOTime();
       String path = "/v2/user/orgs";
       String method = "GET";
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -512,6 +638,7 @@ public class Azuqua {
       String path = "/v2/account/:account_id";
       String method = "DELETE";
       path = path.replace(":account_id", "" + account_id);
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -548,6 +675,23 @@ public class Azuqua {
       String path = "/v2/account/:account_id";
       String method = "GET";
       path = path.replace(":account_id", "" + account_id);
+      String data = "";
+      String signedData = signData(path, method, data, accessSecret, timeStamp);
+      requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
+         public void onResponse(String response) {
+              asyncRequest.onResponse(response);
+         }
+         public void onError(AzuquaError azuquaError) {
+             asyncRequest.onError(azuquaError);
+         }
+      });
+      requestHandler.execute();
+    }
+
+    public void createAccount(java.lang.String data, final AsyncRequest asyncRequest) {
+      String timeStamp = getISOTime();
+      String path = "/v2/account";
+      String method = "POST";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {
@@ -564,6 +708,7 @@ public class Azuqua {
       String timeStamp = getISOTime();
       String path = "/v2/accounts";
       String method = "GET";
+      String data = "";
       String signedData = signData(path, method, data, accessSecret, timeStamp);
       requestHandler = new RequestHandler(routes, path, method, data, timeStamp, signedData, accessKey, new AsyncRequest() {
          public void onResponse(String response) {

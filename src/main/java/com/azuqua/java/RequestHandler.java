@@ -6,6 +6,7 @@ import com.google.gson.*;
 
 import java.io.*;
 import java.net.*;
+import java.util.HashMap;
 
 /**
  * Created by SASi on 14-Jul-16.
@@ -19,6 +20,7 @@ public class RequestHandler {
     private String signedData = null;
     private String accessKey = null;
     private Routes routes = null;
+    private HashMap<String, String> additionalHeaders = null;
     private AsyncRequest asyncRequest = null;
 
     private URLConnection urlConnection = null;
@@ -39,6 +41,19 @@ public class RequestHandler {
         this.timeStamp = timeStamp;
         this.signedData = signedData;
         this.accessKey = accessKey;
+        this.additionalHeaders = null;
+        this.asyncRequest = asyncRequest;
+    }
+
+    public RequestHandler(Routes routes, String path, String method, String payload, String timeStamp, String signedData, String accessKey, HashMap<String, String> additionalHeaders, AsyncRequest asyncRequest) {
+        this.routes = routes;
+        this.path = path;
+        this.method = method.toUpperCase();
+        this.payload = payload;
+        this.timeStamp = timeStamp;
+        this.signedData = signedData;
+        this.accessKey = accessKey;
+        this.additionalHeaders = additionalHeaders;
         this.asyncRequest = asyncRequest;
     }
 
@@ -62,6 +77,11 @@ public class RequestHandler {
                 urlConnection.setRequestProperty("x-api-timestamp", this.timeStamp);
                 urlConnection.setRequestProperty("x-api-hash", this.signedData);
                 urlConnection.setRequestProperty("x-api-accessKey", this.accessKey);
+            }
+            if (this.additionalHeaders != null) {
+                for (String key : this.additionalHeaders.keySet()) {
+                    urlConnection.setRequestProperty(key, additionalHeaders.get(key));
+                }
             }
 
             if (this.method.equals("POST") || this.method.equals("PUT")) {
