@@ -6,12 +6,12 @@
 
     <groupId>com.azuqua</groupId>
     <artifactId>azuqua-java</artifactId>
-    <version>1.0.2</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
 
     <name>Azuqua Java</name>
-    <description>This library provides a Java interface for interacting with your Azuqua flos. The full source is
-        available here in addition to the final jar file.
+    <description>
+      This library provides an interface to Azuqua's V2 API.
     </description>
     <url>https://www.azuqua.com</url>
 
@@ -27,6 +27,12 @@
         <developer>
             <name>Bala Sasidhar Kola</name>
             <email>sasidhar@azuqua.com</email>
+            <organization>Azuqua</organization>
+            <organizationUrl>https://www.azuqua.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Holden Stegman</name>
+            <email>holden@azuqua.com</email>
             <organization>Azuqua</organization>
             <organizationUrl>https://www.azuqua.com</organizationUrl>
         </developer>
@@ -46,7 +52,7 @@
     <scm>
         <connection>scm:git:git://github.com/azuqua/azuqua.java.git</connection>
         <developerConnection>scm:git:ssh://github.com:azuqua/azuqua.java.git</developerConnection>
-        <url>http://github.com/azuqua/azuqua.java/tree/master</url>
+        <url>http://github.com/azuqua/azuqua.java/tree/apiV2</url>
     </scm>
 
     <build>
